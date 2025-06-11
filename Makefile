@@ -20,3 +20,9 @@ backup:
 
 restore:
 	gunzip -c $(PATH_BACKUP) | docker exec -i archive_db psql -U $(DB_USER) -h 127.0.0.1 -d $(DB_NAME)
+
+test:
+	go test ./...
+
+database:
+	
