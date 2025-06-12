@@ -3,3 +3,18 @@
 //   sqlc v1.29.0
 
 package database
+
+import (
+	"time"
+)
+
+type ArchiveSchemaArchive struct {
+	ID             int32     `json:"id"`
+	Filename       string    `json:"filename"`
+	Editorial      string    `json:"editorial"`
+	CoverPage      int32     `json:"cover_page"`
+	File           []byte    `json:"file"`
+	Favorite       bool      `json:"favorite"`
+	ThumbnailImage []byte    `json:"thumbnail_image"`
+	CreatedAt      time.Time `json:"created_at"`
+}

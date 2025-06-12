@@ -1,3 +1,5 @@
+include .env
+
 DATE := $(shell date '+%Y-%m-%d')
 
 ENTRY=./cmd/gochive
@@ -24,5 +26,5 @@ restore:
 test:
 	go test ./...
 
-database:
-	
+sqlc:
+	sqlc generate 

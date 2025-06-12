@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -20,8 +19,7 @@ func (db *DBhdlr) GetName(c *gin.Context) {
 		return
 	}
 
-	param := sql.NullInt32{Int32: int32(id), Valid: true }
-	name, err := db.Query.GetArchive(c, param)
+	name, err := db.Query.GetArchive(c, int32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"status": "Not found"})
