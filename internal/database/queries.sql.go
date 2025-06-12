@@ -40,6 +40,64 @@ func (q *Queries) GetArchiveByName(ctx context.Context) (string, error) {
 	return filename, err
 }
 
+const getArchivePage = `-- name: GetArchivePage :many
+SELECT 
+	id, 
+	filename,
+	editorial
+FROM archive_schema.archive 
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type GetArchivePageParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetArchivePageRow struct {
+	ID        int32  `json:"id"`
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+}
+
+func (q *Queries) GetArchivePage(ctx context.Context, arg GetArchivePageParams) ([]GetArchivePageRow, error) {
+	rows, err := q.db.QueryContext(ctx, getArchivePage, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetArchivePageRow
+	for rows.Next() {
+		var i GetArchivePageRow
+		if err := rows.Scan(&i.ID, &i.Filename, &i.Editorial); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCountArchive = `-- name: GetCountArchive :one
+SELECT
+	count(id)
+FROM archive_schema.archive
+`
+
+func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getCountArchive)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const insertFile = `-- name: InsertFile :exec
 INSERT INTO archive_schema.archive (filename, editorial, file)
 VALUES($1, $2, $3)

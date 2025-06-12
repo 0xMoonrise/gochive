@@ -7,3 +7,18 @@ SELECT filename FROM archive_schema.archive WHERE filename=name;
 -- name: InsertFile :exec
 INSERT INTO archive_schema.archive (filename, editorial, file)
 VALUES($1, $2, $3);
+
+-- name: GetArchivePage :many
+SELECT 
+	id, 
+	filename,
+	editorial
+FROM archive_schema.archive 
+ORDER BY id
+LIMIT $1
+OFFSET $2; 
+
+-- name: GetCountArchive :one
+SELECT
+	count(id)
+FROM archive_schema.archive;

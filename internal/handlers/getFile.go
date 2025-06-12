@@ -26,8 +26,7 @@ func (db *DBhdlr) GetFile(c *gin.Context) {
 	}
 
     c.Header("Content-Type", "application/pdf")
-    c.Header("Content-Disposition", "inline; filename=\""+data.Filename+"\"")
-    c.Header("Content-Length", strconv.Itoa(len(data.File)))
+
 	c.Writer.WriteHeader(http.StatusOK)
     c.Writer.Write(data.File)
   
