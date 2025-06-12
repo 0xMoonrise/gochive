@@ -23,13 +23,19 @@
     </style>
 </head>
 <body>
-    <iframe id="pdfViewer"></iframe>
+
 </body>
 </html>
 <script type="text/javascript">
+
   const params = new URLSearchParams(document.location.search);
   const file = params.get("file");
+
   if (file) {
-    document.getElementById("pdfViewer").src = "/get_file/" + file;
+      const iframe = document.createElement('iframe');
+      iframe.id = "pdfViewer"
+      iframe.src = "/get_file/" + file;
+      document.body.appendChild(iframe);
   }
+
 </script>

@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MD Viewer</title>
-    <link rel="shortcut icon" href="static/favicon.ico">
-    <link rel="stylesheet" href="static/styles/view_md.css">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/styles/view_md.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.css">
 </head>
 <body class="dark-mode">
     <div class="container">
-        <div class="markdown-body">
-        </div>
+      <div class="markdown-body">
+        {{ .Content }}
+      </div>
     </div>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="static/js/view_md.js" type="module"></script>
-    <script src="static/js/copy.js"></script>
+    <script src="/static/js/view_md.js" type="module"></script>
+    <script src="/static/js/copy.js"></script>
 </body>
 </html>

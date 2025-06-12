@@ -12,6 +12,36 @@ import (
 	"github.com/0xMoonrise/gochive/internal/utils"
 )
 
+func makeThumbnail(data []byte, thumb *[]byte, filename string,  c *gin.Context) error {
+
+	thumbnail, err := utils.GenerateWebpThumbnail(data, "static/thumbnails/")
+
+	if err != nil {
+		
+		slog.Error("cannot generate the thumbnail")
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
+
+		return err
+	}
+
+	thumName := strings.Replace(filename, "pdf", "webp", 1)
+	err = utils.SaveThumbnailToStatic(thumbnail, thumName)
+
+	if err != nil {
+
+		slog.Error("cannot generate the thumbnail")
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
+
+		return err
+	}
+	
+	*thumb = thumbnail
+
+	return nil
+}
+
 func validateFilename(filename string) bool {
 	match, _ := regexp.MatchString("^[a-zA-Z0-9._ -]+.(pdf|md)$", filename)
 	log.Println(match)
@@ -22,7 +52,8 @@ func validateFilename(filename string) bool {
 func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 	file, err := c.FormFile("file")
-
+	var thumbnail []byte
+	
 	if err != nil {
 		slog.Error("something went wrong while uploading the a file")
 		log.Println(err)
@@ -54,25 +85,13 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		return
 	}
 
-	thumbnail, err := utils.GenerateWebpThumbnail(data, "static/thumbnails/")
+	thumbnail = nil
 
-	if err != nil {
-		slog.Error("cannot generate the thumbnail")
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
-		return
-	}
-	
-	thumName := strings.Replace(file.Filename, "pdf", "webp", 1)
-	err = utils.SaveThumbnailToStatic(thumbnail, thumName)
-
-	if err != nil {
-
-		slog.Error("cannot generate the thumbnail")
-        log.Println(err)
-        c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
-
-		return
+	if strings.Contains(file.Filename, "pdf") {
+		err := makeThumbnail(data, &thumbnail, file.Filename, c)
+		if err != nil {
+			return 
+		}
 	}
 	
 	insertFile := database.InsertFileParams{

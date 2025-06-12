@@ -110,11 +110,11 @@ function make_cardElement(file)
 		const iframe = document.createElement("iframe");
 
 		iframe.classList.add("card-thumbnail")
-		iframe.src = `view_md/${file.filename}`;
+		iframe.src = `get_file/${file.id}`;
 		iframe.scrolling = "no";
 
 		card.append(iframe);
-		card.href = `view_md/${file.filename}`;
+		card.href = `get_file/${file.id}`;
 	}
 
 	card_container.append(card);
