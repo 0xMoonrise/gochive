@@ -8,8 +8,12 @@ import (
 func NewServer() *gin.Engine {
 
 	r := gin.Default()
+	
+	r.LoadHTMLGlob("templates/*")
+	r.Static("/static", "./static")
 
+	r.GET("/", handlers.Root)
 	r.GET("/hello", handlers.Hello)
- 
+	
     return r
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="static/styles/index.css">
+    <link rel="shortcut icon" href="static/favicon.ico">
+</head>
+<body>
+    <h1>Moonrise's Archive</h1>
+	<section class="pagination-section">
+	</section>
+    <section class="card-list">
+        <div class="content-navigator">
+            <form name="search" action="." method="POST" class="form-input">
+                <input class="input-search" name="query" autocomplete="off">
+            </form>
+             <button class="btn-upload" onclick="document.getElementById('file-input').click()">
+                <svg class="plus-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4V12M12 12V20M12 12H4M12 12H20" stroke="#bb86fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+    <input type="file" id="file-input" accept=".pdf,.md" onchange="uploadFile()">
+    <script src="static/js/index.js">
+    </script>
+</body>
+</html>
