@@ -80,7 +80,7 @@ async function sendData()
     }
 }
 
-function make_cardElement(filename)
+function make_cardElement(file)
 {
 
 	const cardList = document.querySelector(".card-list");
@@ -92,29 +92,29 @@ function make_cardElement(filename)
 
 	const card_tittle = document.createElement("div");
 	card_tittle.classList.add("card-title");
-	card_tittle.innerText = filename;
+	card_tittle.innerText = file.filename;
 
-	if(filename.includes('.pdf'))
+	if(file.filename.includes('.pdf'))
 	{
 		const img = document.createElement("img");
 
 		img.classList.add("card-thumbnail");
-		img.src = `thumbnail/${filename.replace(".pdf", ".webp")}`;
+		img.src = `static/thumbnails/${file.filename.replace(".pdf", ".webp")}`;
 
 		card.append(img);
-		card.href = `view_pdf/${filename}`;
+		card.href = `view?file=${file.id}`;
 	}
 
-	if(filename.includes('.md'))
+	if(file.filename.includes('.md'))
 	{
 		const iframe = document.createElement("iframe");
 
 		iframe.classList.add("card-thumbnail")
-		iframe.src = `view_md/${filename}`;
+		iframe.src = `view_md/${file.filename}`;
 		iframe.scrolling = "no";
 
 		card.append(iframe);
-		card.href = `view_md/${filename}`;
+		card.href = `view_md/${file.filename}`;
 	}
 
 	card_container.append(card);
@@ -234,8 +234,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const archive = await response.json();
 
 		//Loaded from all
-        archive.files.forEach(filename => {
-            make_cardElement(filename);
+        archive.files.forEach(files => {
+            make_cardElement(files);
         });
         
 		make_paginationSection(archive.pages, page);
