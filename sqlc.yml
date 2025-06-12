@@ -1,8 +1,9 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "migratons/query.sql"
-    schema: "migrations/schema.sql"
+    queries: "migrations/querys/querys.sql"
+    database:
+      uri: postgresql://db_user:db_password@127.0.0.1:5432/archive?sslmode=disable
     gen:
       go:
         emit_json_tags: true

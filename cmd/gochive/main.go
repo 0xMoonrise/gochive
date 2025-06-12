@@ -6,7 +6,10 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/0xMoonrise/gochive/internal/config"
+	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/server"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -22,8 +25,17 @@ func main() {
 	host := os.Getenv("HOST")
 
 	addr := fmt.Sprintf("%s:%s", host, port)
+
+	cfg, err := config.LoadConfig()
+
+	if err != nil {
+		slog.Error("Database is not connected")
+		log.Println(err)
+	}
+
+	db := database.New(cfg)
 	
-	server := server.NewServer()
+	server := server.NewServer(db)
 	server.Run(addr)
 }
 
