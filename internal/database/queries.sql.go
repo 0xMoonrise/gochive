@@ -10,18 +10,22 @@ import (
 )
 
 const getArchive = `-- name: GetArchive :one
-SELECT id, filename FROM archive_schema.archive WHERE id = $1
+SELECT id, filename, editorial, cover_page, file, favorite, thumbnail_image, created_at FROM archive_schema.archive WHERE id = $1 LIMIT 1
 `
 
-type GetArchiveRow struct {
-	ID       int32  `json:"id"`
-	Filename string `json:"filename"`
-}
-
-func (q *Queries) GetArchive(ctx context.Context, id int32) (GetArchiveRow, error) {
+func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error) {
 	row := q.db.QueryRowContext(ctx, getArchive, id)
-	var i GetArchiveRow
-	err := row.Scan(&i.ID, &i.Filename)
+	var i ArchiveSchemaArchive
+	err := row.Scan(
+		&i.ID,
+		&i.Filename,
+		&i.Editorial,
+		&i.CoverPage,
+		&i.File,
+		&i.Favorite,
+		&i.ThumbnailImage,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -34,4 +38,20 @@ func (q *Queries) GetArchiveByName(ctx context.Context) (string, error) {
 	var filename string
 	err := row.Scan(&filename)
 	return filename, err
+}
+
+const insertFile = `-- name: InsertFile :exec
+INSERT INTO archive_schema.archive (filename, editorial, file)
+VALUES($1, $2, $3)
+`
+
+type InsertFileParams struct {
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+	File      []byte `json:"file"`
+}
+
+func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) error {
+	_, err := q.db.ExecContext(ctx, insertFile, arg.Filename, arg.Editorial, arg.File)
+	return err
 }

@@ -17,7 +17,8 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 
 	r.GET("/", handlers.Root)
 	r.GET("/ping", handlers.Ping)
-	r.GET("/get_name/:id", hdlr.GetName)
+	r.GET("/get_file/:id", hdlr.GetFile)
 
+	r.POST("/upload", hdlr.UploadFile)
 	return r
 }
