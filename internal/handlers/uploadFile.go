@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"regexp"
 	"io"
+	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/0xMoonrise/gochive/internal/database"
+	"github.com/0xMoonrise/gochive/internal/utils"
 )
 
 func validateFilename(filename string) bool {
@@ -45,9 +47,31 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	}
 
 	defer rawFile.Close()
+	
 	data, err := io.ReadAll(rawFile)
 
 	if err != nil {
+		return
+	}
+
+	thumbnail, err := utils.GenerateWebpThumbnail(data, "static/thumbnails/")
+
+	if err != nil {
+		slog.Error("cannot generate the thumbnail")
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
+		return
+	}
+	
+	thumName := strings.Replace(file.Filename, "pdf", "webp", 1)
+	err = utils.SaveThumbnailToStatic(thumbnail, thumName)
+
+	if err != nil {
+
+		slog.Error("cannot generate the thumbnail")
+        log.Println(err)
+        c.JSON(http.StatusInternalServerError, gin.H{"status":"something went wrong"})
+
 		return
 	}
 	
@@ -55,6 +79,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		Filename: file.Filename,
 		Editorial: "Default",
 		File: data,
+		ThumbnailImage: thumbnail,
 	}
 	
 	err = db.Query.InsertFile(c, insertFile)

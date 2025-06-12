@@ -99,17 +99,23 @@ func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
 }
 
 const insertFile = `-- name: InsertFile :exec
-INSERT INTO archive_schema.archive (filename, editorial, file)
-VALUES($1, $2, $3)
+INSERT INTO archive_schema.archive (filename, editorial, file, thumbnail_image)
+VALUES($1, $2, $3, $4)
 `
 
 type InsertFileParams struct {
-	Filename  string `json:"filename"`
-	Editorial string `json:"editorial"`
-	File      []byte `json:"file"`
+	Filename       string `json:"filename"`
+	Editorial      string `json:"editorial"`
+	File           []byte `json:"file"`
+	ThumbnailImage []byte `json:"thumbnail_image"`
 }
 
 func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) error {
-	_, err := q.db.ExecContext(ctx, insertFile, arg.Filename, arg.Editorial, arg.File)
+	_, err := q.db.ExecContext(ctx, insertFile,
+		arg.Filename,
+		arg.Editorial,
+		arg.File,
+		arg.ThumbnailImage,
+	)
 	return err
 }
