@@ -34,6 +34,7 @@ func main() {
 	}
 
 	db := database.New(cfg)
+	dumpImages("static/thumbnails/", db)
 	
 	server := server.NewServer(db)
 	server.Run(addr)

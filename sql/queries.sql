@@ -22,3 +22,6 @@ OFFSET $2;
 SELECT
 	count(id)
 FROM archive_schema.archive;
+
+-- name: GetThumbnails :many
+SELECT filename, thumbnail_image FROM archive_schema.archive;

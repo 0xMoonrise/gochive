@@ -98,6 +98,38 @@ func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const getThumbnails = `-- name: GetThumbnails :many
+SELECT filename, thumbnail_image FROM archive_schema.archive
+`
+
+type GetThumbnailsRow struct {
+	Filename       string `json:"filename"`
+	ThumbnailImage []byte `json:"thumbnail_image"`
+}
+
+func (q *Queries) GetThumbnails(ctx context.Context) ([]GetThumbnailsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getThumbnails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetThumbnailsRow
+	for rows.Next() {
+		var i GetThumbnailsRow
+		if err := rows.Scan(&i.Filename, &i.ThumbnailImage); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertFile = `-- name: InsertFile :exec
 INSERT INTO archive_schema.archive (filename, editorial, file, thumbnail_image)
 VALUES($1, $2, $3, $4)
