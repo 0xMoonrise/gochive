@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"io"
 	"strings"
+	"github.com/mrz1836/go-sanitize"
 	"github.com/gin-gonic/gin"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/utils"
@@ -43,7 +44,7 @@ func makeThumbnail(data []byte, thumb *[]byte, filename string,  c *gin.Context)
 }
 
 func validateFilename(filename string) bool {
-	match, _ := regexp.MatchString("^[a-zA-Z0-9._ -]+.(pdf|md)$", filename)
+	match, _ := regexp.MatchString("^.+(pdf|md)$", filename)
 	log.Println(match)
 	return match
 }
@@ -86,16 +87,17 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	}
 
 	thumbnail = nil
+	filename := sanitize.XSS(file.Filename)
 
 	if strings.Contains(file.Filename, "pdf") {
-		err := makeThumbnail(data, &thumbnail, file.Filename, c)
+		err := makeThumbnail(data, &thumbnail, filename, c)
 		if err != nil {
 			return 
 		}
 	}
-	
+
 	insertFile := database.InsertFileParams{
-		Filename: file.Filename,
+		Filename: filename,
 		Editorial: "Default",
 		File: data,
 		ThumbnailImage: thumbnail,
