@@ -25,3 +25,20 @@ FROM archive_schema.archive;
 
 -- name: GetThumbnails :many
 SELECT filename, thumbnail_image FROM archive_schema.archive;
+
+-- name: SearchArchive :many
+SELECT
+    id,
+    filename,
+    editorial
+FROM archive_schema.archive
+WHERE filename ILIKE '%' || $1 || '%'
+ORDER BY id
+LIMIT $2
+OFFSET $3;
+
+-- name: GetCountSearch :one
+SELECT
+    count(id)
+FROM archive_schema.archive
+WHERE filename ILIKE '%' || $1 || '%';

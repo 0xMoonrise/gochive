@@ -51,16 +51,19 @@ function uploadFile()
 
 async function sendData()
 {
+
     const search = new FormData(form);
 	let page = parseInt(getCookieByName('page'));
 	page = page ? page : 1;
-	
+    const params = new URLSearchParams();
+    params.append('search', search.get('query'));
+
     try
     {
-	    const response = await fetch(`${window.location.origin}/get_files/${page}`,
+	    const response = await fetch(`${window.location.origin}/search/${page}`,
 	    {
 	        method: "POST",
-	        body: search,
+	        body: params,
 	    });
 
 	    archive = await response.json();
@@ -69,8 +72,8 @@ async function sendData()
 		const cards = card_list.querySelectorAll(".card-container");
 		cards.forEach(card => card.remove());
 		// Loaded from search
-		archive.files.forEach(filename => {
-    		make_cardElement(filename);
+		archive.files.forEach(file => {
+    		make_cardElement(file);
 		});
 		make_paginationSection(archive.pages, page);
     }
@@ -247,16 +250,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function button_event(e) {
-    const input_search = document.querySelector(".input-search");
+
+    const search = new FormData(form);
+    const params = new URLSearchParams();
+    params.append('search', search.get('query'));
+
     let response;
     try {
-        if (input_search.value) {
-            response = await fetch(`${window.location.origin}/get_files/${e.innerText}`, {
+        if (search.get('query')) {
+            response = await fetch(`${window.location.origin}/search/${e.innerText}`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: `query=${input_search.value}`,
+                body: params,
             });
         } else {
             response = await fetch(`/get_files/${e.innerText}`);

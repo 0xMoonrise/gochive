@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const getArchive = `-- name: GetArchive :one
@@ -98,6 +99,20 @@ func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const getCountSearch = `-- name: GetCountSearch :one
+SELECT
+    count(id)
+FROM archive_schema.archive
+WHERE filename ILIKE '%' || $1 || '%'
+`
+
+func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getCountSearch, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getThumbnails = `-- name: GetThumbnails :many
 SELECT filename, thumbnail_image FROM archive_schema.archive
 `
@@ -150,4 +165,51 @@ func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) error {
 		arg.ThumbnailImage,
 	)
 	return err
+}
+
+const searchArchive = `-- name: SearchArchive :many
+SELECT
+    id,
+    filename,
+    editorial
+FROM archive_schema.archive
+WHERE filename ILIKE '%' || $1 || '%'
+ORDER BY id
+LIMIT $2
+OFFSET $3
+`
+
+type SearchArchiveParams struct {
+	Column1 sql.NullString `json:"column_1"`
+	Limit   int32          `json:"limit"`
+	Offset  int32          `json:"offset"`
+}
+
+type SearchArchiveRow struct {
+	ID        int32  `json:"id"`
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+}
+
+func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([]SearchArchiveRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchArchive, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchArchiveRow
+	for rows.Next() {
+		var i SearchArchiveRow
+		if err := rows.Scan(&i.ID, &i.Filename, &i.Editorial); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

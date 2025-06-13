@@ -21,5 +21,6 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 	r.GET("/get_files/:page", hdlr.GetFiles)
 
 	r.POST("/upload", hdlr.UploadFile)
+	r.POST("/search/:page", hdlr.SearchFiles)
 	return r
 }
