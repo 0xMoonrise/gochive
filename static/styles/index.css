@@ -22,6 +22,7 @@ h1 {
 }
 
 .card-container {
+	position: relative;
     display: flex;
 }
 
@@ -33,6 +34,7 @@ h1 {
 }
 
 .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     text-decoration: none;
@@ -49,7 +51,6 @@ h1 {
 }
 
 .card:hover {
-    transform: translateY(-5px); 
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); 
 }
 
@@ -64,6 +65,8 @@ h1 {
     color: #ffffff; 
 }
 .card-title {
+    position: relative;
+    z-index: 2;
 	padding-top: 20px;
     font-size: 18px;
     font-weight: 500;
@@ -161,3 +164,23 @@ iframe{
     background-color: #e0e0e0;
     color: #9b59b6;
 }
+
+.card-button-favorite {
+    top: 25px; 
+    left: 25px; 
+    position: absolute; 
+    z-index: 2;
+    background-color: #3d3d3d;
+    color: #bb86fc;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.card-button-favorite:hover {
+    color: #FFD700;
+}
+

@@ -83,19 +83,74 @@ async function sendData()
     }
 }
 
+function createFavoriteButton(file) {
+    const button_favorite = document.createElement("button");
+    button_favorite.innerText = "★";
+    button_favorite.className = "card-button-favorite";
+
+    const activeColor = "#FFD700";
+    const inactiveColor = "#bb86fc";
+
+    button_favorite.style.color = file.favorite ? activeColor : inactiveColor;
+
+    button_favorite.addEventListener("mouseenter", () => {
+        button_favorite.style.color = file.favorite ? inactiveColor : activeColor;
+    });
+
+    button_favorite.addEventListener("mouseleave", () => {
+        button_favorite.style.color = file.favorite ? activeColor : inactiveColor;
+    });
+
+    button_favorite.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const prevFavorite = file.favorite;
+        file.favorite = !prevFavorite;
+
+        button_favorite.style.color = file.favorite ? activeColor : inactiveColor;
+
+        const formData = new FormData();
+        formData.append('favorite', file.favorite);
+
+        fetch(`/set_favorite/${file.id}`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Error setting up the value');
+            return response.json();
+        })
+        .catch(error => {
+            file.favorite = prevFavorite;
+            button_favorite.style.color = file.favorite ? activeColor : inactiveColor;
+        });
+    });
+
+    return button_favorite;
+}
+
 function make_cardElement(file)
 {
 
 	const cardList = document.querySelector(".card-list");
 	const card_container = document.createElement("div");
+
 	card_container.classList.add("card-container");
-
 	const card = document.createElement("a");
-	card.classList.add("card");
 
+	card.classList.add("card");
 	const card_tittle = document.createElement("div");
 	card_tittle.classList.add("card-title");
 	card_tittle.innerText = file.filename;
+
+	const button_favorite = createFavoriteButton(file);
+	
+	if (file.favorite) {
+		button_favorite.style.color = "#FFD700";
+	} else {
+		button_favorite.style.color = "#bb86fc";
+	}
+	// #FFD700 -> true
+	// #bb86fc -> false
 
 	if(file.filename.includes('.pdf'))
 	{
@@ -119,7 +174,8 @@ function make_cardElement(file)
 		card.append(iframe);
 		card.href = `get_file/${file.id}`;
 	}
-
+	
+	card_container.append(button_favorite);
 	card_container.append(card);
 	card.append(card_tittle);
 	cardList.append(card_container);
@@ -285,3 +341,4 @@ async function button_event(e) {
         console.error("Error:", error);
     }
 }
+

@@ -22,5 +22,7 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 
 	r.POST("/upload", hdlr.UploadFile)
 	r.POST("/search/:page", hdlr.SearchFiles)
+	r.POST("/set_favorite/:id", hdlr.SetFavorite)
+
 	return r
 }

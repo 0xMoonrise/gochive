@@ -45,9 +45,10 @@ const getArchivePage = `-- name: GetArchivePage :many
 SELECT 
 	id, 
 	filename,
-	editorial
+	editorial,
+    favorite
 FROM archive_schema.archive 
-ORDER BY id
+ORDER BY favorite DESC, id
 LIMIT $1
 OFFSET $2
 `
@@ -61,6 +62,7 @@ type GetArchivePageRow struct {
 	ID        int32  `json:"id"`
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
+	Favorite  bool   `json:"favorite"`
 }
 
 func (q *Queries) GetArchivePage(ctx context.Context, arg GetArchivePageParams) ([]GetArchivePageRow, error) {
@@ -72,7 +74,12 @@ func (q *Queries) GetArchivePage(ctx context.Context, arg GetArchivePageParams) 
 	var items []GetArchivePageRow
 	for rows.Next() {
 		var i GetArchivePageRow
-		if err := rows.Scan(&i.ID, &i.Filename, &i.Editorial); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Filename,
+			&i.Editorial,
+			&i.Favorite,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -171,10 +178,11 @@ const searchArchive = `-- name: SearchArchive :many
 SELECT
     id,
     filename,
-    editorial
+    editorial,
+    favorite
 FROM archive_schema.archive
 WHERE filename ILIKE '%' || $1 || '%'
-ORDER BY id
+ORDER BY favorite DESC, id
 LIMIT $2
 OFFSET $3
 `
@@ -189,6 +197,7 @@ type SearchArchiveRow struct {
 	ID        int32  `json:"id"`
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
+	Favorite  bool   `json:"favorite"`
 }
 
 func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([]SearchArchiveRow, error) {
@@ -200,7 +209,12 @@ func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([
 	var items []SearchArchiveRow
 	for rows.Next() {
 		var i SearchArchiveRow
-		if err := rows.Scan(&i.ID, &i.Filename, &i.Editorial); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Filename,
+			&i.Editorial,
+			&i.Favorite,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -212,4 +226,20 @@ func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const setFavorite = `-- name: SetFavorite :exec
+UPDATE archive_schema.archive
+SET favorite=$1
+WHERE id = $2
+`
+
+type SetFavoriteParams struct {
+	Favorite bool  `json:"favorite"`
+	ID       int32 `json:"id"`
+}
+
+func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) error {
+	_, err := q.db.ExecContext(ctx, setFavorite, arg.Favorite, arg.ID)
+	return err
 }

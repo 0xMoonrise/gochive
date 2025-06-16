@@ -12,9 +12,10 @@ VALUES($1, $2, $3, $4);
 SELECT 
 	id, 
 	filename,
-	editorial
+	editorial,
+    favorite
 FROM archive_schema.archive 
-ORDER BY id
+ORDER BY favorite DESC, id
 LIMIT $1
 OFFSET $2; 
 
@@ -30,10 +31,11 @@ SELECT filename, thumbnail_image FROM archive_schema.archive;
 SELECT
     id,
     filename,
-    editorial
+    editorial,
+    favorite
 FROM archive_schema.archive
 WHERE filename ILIKE '%' || $1 || '%'
-ORDER BY id
+ORDER BY favorite DESC, id
 LIMIT $2
 OFFSET $3;
 
@@ -42,3 +44,9 @@ SELECT
     count(id)
 FROM archive_schema.archive
 WHERE filename ILIKE '%' || $1 || '%';
+
+-- name: SetFavorite :exec
+UPDATE archive_schema.archive
+SET favorite=$1
+WHERE id = $2;
+
