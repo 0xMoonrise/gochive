@@ -121,11 +121,15 @@ func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (
 }
 
 const getThumbnails = `-- name: GetThumbnails :many
-SELECT filename, thumbnail_image FROM archive_schema.archive
+SELECT 
+	id, 
+	thumbnail_image 
+FROM archive_schema.archive
+ORDER BY id
 `
 
 type GetThumbnailsRow struct {
-	Filename       string `json:"filename"`
+	ID             int32  `json:"id"`
 	ThumbnailImage []byte `json:"thumbnail_image"`
 }
 
@@ -138,7 +142,7 @@ func (q *Queries) GetThumbnails(ctx context.Context) ([]GetThumbnailsRow, error)
 	var items []GetThumbnailsRow
 	for rows.Next() {
 		var i GetThumbnailsRow
-		if err := rows.Scan(&i.Filename, &i.ThumbnailImage); err != nil {
+		if err := rows.Scan(&i.ID, &i.ThumbnailImage); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -226,6 +230,26 @@ func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const setEditFile = `-- name: SetEditFile :exec
+UPDATE 
+	archive_schema.archive
+SET 
+	filename=$1, 
+	editorial=$2
+WHERE id=$3
+`
+
+type SetEditFileParams struct {
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+	ID        int32  `json:"id"`
+}
+
+func (q *Queries) SetEditFile(ctx context.Context, arg SetEditFileParams) error {
+	_, err := q.db.ExecContext(ctx, setEditFile, arg.Filename, arg.Editorial, arg.ID)
+	return err
 }
 
 const setFavorite = `-- name: SetFavorite :exec

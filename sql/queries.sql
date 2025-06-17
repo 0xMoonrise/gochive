@@ -25,7 +25,11 @@ SELECT
 FROM archive_schema.archive;
 
 -- name: GetThumbnails :many
-SELECT filename, thumbnail_image FROM archive_schema.archive;
+SELECT 
+	id, 
+	thumbnail_image 
+FROM archive_schema.archive
+ORDER BY id;
 
 -- name: SearchArchive :many
 SELECT
@@ -50,3 +54,10 @@ UPDATE archive_schema.archive
 SET favorite=$1
 WHERE id = $2;
 
+-- name: SetEditFile :exec
+UPDATE 
+	archive_schema.archive
+SET 
+	filename=$1, 
+	editorial=$2
+WHERE id=$3;

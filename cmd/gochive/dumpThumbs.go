@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/0xMoonrise/gochive/internal/database"
@@ -13,7 +13,7 @@ import (
 
 func dumpImages(path string, db *database.Queries) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 
 	data, err := db.GetThumbnails(ctx)
 
@@ -25,7 +25,7 @@ func dumpImages(path string, db *database.Queries) {
 
 	for _, image := range data {
 
-		path := filepath.Join(path, strings.Replace(image.Filename, "pdf", "webp", 1))
+		path := filepath.Join(path, strconv.Itoa(int(image.ID)))
 
 		_, err := os.Stat(path)
 
