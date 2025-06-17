@@ -4,9 +4,10 @@ SELECT * FROM archive_schema.archive WHERE id = $1 LIMIT 1;
 -- name: GetArchiveByName :one
 SELECT filename FROM archive_schema.archive WHERE filename=name;
 
--- name: InsertFile :exec
+-- name: InsertFile :one
 INSERT INTO archive_schema.archive (filename, editorial, file, thumbnail_image)
-VALUES($1, $2, $3, $4);
+VALUES($1, $2, $3, $4)
+RETURNING id;
 
 -- name: GetArchivePage :many
 SELECT 

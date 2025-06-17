@@ -1,16 +1,18 @@
 package handlers
 
 import (
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
 	"regexp"
-	"io"
+	"strconv"
 	"strings"
-	"github.com/mrz1836/go-sanitize"
-	"github.com/gin-gonic/gin"
+
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/mrz1836/go-sanitize"
 )
 
 func makeThumbnail(data []byte, thumb *[]byte, filename string,  c *gin.Context) error {
@@ -26,8 +28,7 @@ func makeThumbnail(data []byte, thumb *[]byte, filename string,  c *gin.Context)
 		return err
 	}
 
-	thumName := strings.Replace(filename, "pdf", "webp", 1)
-	err = utils.SaveThumbnailToStatic(thumbnail, thumName)
+	err = utils.SaveThumbnailToStatic(thumbnail, filename)
 
 	if err != nil {
 
@@ -89,13 +90,6 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	thumbnail = nil
 	filename := sanitize.XSS(file.Filename)
 
-	if strings.Contains(file.Filename, "pdf") {
-		err := makeThumbnail(data, &thumbnail, filename, c)
-		if err != nil {
-			return 
-		}
-	}
-
 	insertFile := database.InsertFileParams{
 		Filename: filename,
 		Editorial: "Default",
@@ -103,12 +97,20 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		ThumbnailImage: thumbnail,
 	}
 	
-	err = db.Query.InsertFile(c, insertFile)
+	id, err := db.Query.InsertFile(c, insertFile)
 
 	if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"status": "DB insert failed"})
         return
     }
+
+	if strings.Contains(file.Filename, "pdf") {
+		err := makeThumbnail(data, &thumbnail, strconv.Itoa(int(id)), c)
+		if err != nil {
+			return
+		}
+	}
+
 	
 	c.JSON(http.StatusOK, gin.H{"status":"Uploaded successful"})
 }
