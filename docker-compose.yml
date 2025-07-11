@@ -1,19 +1,30 @@
 services:
   postgres:
-    image: postgres:latest
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.db
     container_name: archive_db
-
     ports:
       - "5432:5432"
-
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
       - POSTGRES_DB=${DB_NAME}
-
     volumes:
       - data:/var/lib/postgresql/data
 
+  gochive:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.app
+    container_name: archive_app
+    environment:
+      - DB_HOST=postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      
 volumes:
   data:
     driver: local

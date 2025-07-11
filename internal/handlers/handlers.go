@@ -11,4 +11,3 @@ type DBhdlr struct {
 func Handler(db *database.Queries) *DBhdlr {
 	return &DBhdlr{Query: db}
 }
-

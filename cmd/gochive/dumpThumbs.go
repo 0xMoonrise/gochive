@@ -20,7 +20,7 @@ func dumpImages(path string, db *database.Queries) {
 	if err != nil {
 		slog.Error("something went wrong while trying to dump the thumbnails")
 	}
-	
+
 	defer cancel()
 
 	for _, image := range data {
@@ -29,10 +29,10 @@ func dumpImages(path string, db *database.Queries) {
 
 		_, err := os.Stat(path)
 
-		if err == nil || ! os.IsNotExist(err) {
+		if err == nil || !os.IsNotExist(err) {
 			continue
 		}
-		
+
 		os.WriteFile(path, image.ThumbnailImage, 0644)
 
 	}

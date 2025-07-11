@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatal("An error occured:", err)
 	}
-	
+
 	port := os.Getenv("PORT")
 	host := os.Getenv("HOST")
 
@@ -35,10 +35,7 @@ func main() {
 
 	db := database.New(cfg)
 	dumpImages("static/thumbnails/", db)
-	
+
 	server := server.NewServer(db)
 	server.Run(addr)
 }
-
-
-

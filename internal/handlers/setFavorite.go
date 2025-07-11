@@ -1,20 +1,20 @@
 package handlers
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
 	"github.com/0xMoonrise/gochive/internal/database"
-	"strconv"
+	"github.com/gin-gonic/gin"
 	"log/slog"
+	"net/http"
+	"strconv"
 )
 
 func (db *DBhdlr) SetFavorite(c *gin.Context) {
-	
+
 	param1, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		slog.Warn("Error trying to parse the page number")
-		c.JSON(http.StatusInternalServerError, gin.H{"status":"Something went wrong... "})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})
 		return
 	}
 
@@ -23,14 +23,14 @@ func (db *DBhdlr) SetFavorite(c *gin.Context) {
 
 	if err != nil {
 		slog.Warn("Error trying to parse the favorite bool")
-		c.JSON(http.StatusInternalServerError, gin.H{"status":"Something went wrong..."})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong..."})
 		return
 	}
-	
+
 	db.Query.SetFavorite(c, database.SetFavoriteParams{
 		Favorite: favorite,
-		ID: id,
+		ID:       id,
 	})
 
-	c.JSON(http.StatusOK, gin.H{"status":"Favorite Updated"})
+	c.JSON(http.StatusOK, gin.H{"status": "Favorite Updated"})
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func ViewFile(c *gin.Context) {
-    c.HTML(http.StatusOK, "view_pdf.html", gin.H{
-      "title": "Main website",
-    })
+	c.HTML(http.StatusOK, "view_pdf.html", gin.H{
+		"title": "Main website",
+	})
 }

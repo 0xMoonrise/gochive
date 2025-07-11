@@ -15,7 +15,7 @@ func Init() error {
 		slog.Warn("Something went wrong while trying to read the .env file")
 		return err
 	}
-	
+
 	slog.Info("Success! .env has been loaded")
 
 	return nil

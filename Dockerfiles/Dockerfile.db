@@ -1,0 +1,4 @@
+FROM postgres:latest
+
+COPY migrations/001_create_db.sql /docker-entrypoint-initdb.d/init.sql
+
