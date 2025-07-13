@@ -157,28 +157,42 @@ func (q *Queries) GetThumbnails(ctx context.Context) ([]GetThumbnailsRow, error)
 }
 
 const insertFile = `-- name: InsertFile :one
-INSERT INTO archive_schema.archive (filename, editorial, file, thumbnail_image)
-VALUES($1, $2, $3, $4)
+INSERT INTO archive_schema.archive(
+	filename,
+	editorial,
+	file)
+VALUES($1, $2, $3)
 RETURNING id
 `
 
 type InsertFileParams struct {
-	Filename       string `json:"filename"`
-	Editorial      string `json:"editorial"`
-	File           []byte `json:"file"`
-	ThumbnailImage []byte `json:"thumbnail_image"`
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+	File      []byte `json:"file"`
 }
 
 func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, insertFile,
-		arg.Filename,
-		arg.Editorial,
-		arg.File,
-		arg.ThumbnailImage,
-	)
+	row := q.db.QueryRowContext(ctx, insertFile, arg.Filename, arg.Editorial, arg.File)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const saveThumbnail = `-- name: SaveThumbnail :exec
+UPDATE archive_schema.archive
+SET
+	thumbnail_image=$1
+WHERE id=$2
+`
+
+type SaveThumbnailParams struct {
+	ThumbnailImage []byte `json:"thumbnail_image"`
+	ID             int32  `json:"id"`
+}
+
+func (q *Queries) SaveThumbnail(ctx context.Context, arg SaveThumbnailParams) error {
+	_, err := q.db.ExecContext(ctx, saveThumbnail, arg.ThumbnailImage, arg.ID)
+	return err
 }
 
 const searchArchive = `-- name: SearchArchive :many

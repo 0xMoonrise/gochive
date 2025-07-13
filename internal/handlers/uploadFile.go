@@ -90,10 +90,9 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	filename := sanitize.XSS(file.Filename)
 
 	insertFile := database.InsertFileParams{
-		Filename:       filename,
-		Editorial:      "Default",
-		File:           data,
-		ThumbnailImage: thumbnail,
+		Filename:  filename,
+		Editorial: "Default",
+		File:      data,
 	}
 
 	id, err := db.Query.InsertFile(c, insertFile)
@@ -105,8 +104,18 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 	if strings.Contains(file.Filename, "pdf") {
 		err := makeThumbnail(data, &thumbnail, strconv.Itoa(int(id)), c)
+
 		if err != nil {
 			return
+		}
+
+		err = db.Query.SaveThumbnail(c, database.SaveThumbnailParams{
+			ID:             id,
+			ThumbnailImage: thumbnail,
+		})
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 		}
 	}
 

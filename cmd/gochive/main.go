@@ -26,16 +26,18 @@ func main() {
 
 	addr := fmt.Sprintf("%s:%s", host, port)
 
-	cfg, err := config.LoadConfig()
-
+	conn, err := config.LoadConfig()
+	
 	if err != nil {
 		slog.Error("Database is not connected")
-		log.Println(err)
+		log.Fatal(err)
 	}
-
-	db := database.New(cfg)
+	
+	defer conn.Close()
+	db := database.New(conn)
+	
 	dumpImages("static/thumbnails/", db)
-
+	
 	server := server.NewServer(db)
 	server.Run(addr)
 }
