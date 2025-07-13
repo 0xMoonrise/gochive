@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS archive_schema.archive (
     CONSTRAINT check_cover_page_positive CHECK (cover_page >= 1)
 );
 -- +goose Down
-DROP SCHEMA archive_schema CASCADE;
-DROP TABLE IF EXISTS archive_schema.archive;
+-- DROP SCHEMA archive_schema CASCADE;
+-- DROP TABLE IF EXISTS archive_schema.archive;

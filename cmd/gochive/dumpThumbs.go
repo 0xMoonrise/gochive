@@ -23,8 +23,16 @@ func dumpImages(path string, db *database.Queries) {
 
 	defer cancel()
 
+	thumbPath := "static/thumbnails"
+	if _, err := os.Stat(thumbPath); os.IsNotExist(err) {
+		err := os.MkdirAll(thumbPath, 0755)
+		if err != nil {
+			slog.Error("Something went wrong creating the dir")
+			return
+		}
+	}
+	
 	for _, image := range data {
-
 		path := filepath.Join(path, strconv.Itoa(int(image.ID)))
 
 		_, err := os.Stat(path)

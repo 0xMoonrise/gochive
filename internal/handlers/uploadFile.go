@@ -116,6 +116,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
+			return
 		}
 	}
 
