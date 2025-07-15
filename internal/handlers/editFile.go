@@ -1,12 +1,14 @@
 package handlers
 
 import (
-	"github.com/0xMoonrise/gochive/internal/database"
-	"github.com/gin-gonic/gin"
-	"github.com/mrz1836/go-sanitize"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/0xMoonrise/gochive/internal/database"
+	"github.com/0xMoonrise/gochive/internal/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/mrz1836/go-sanitize"
 )
 
 func (db *DBhdlr) SetEditFile(c *gin.Context) {
@@ -21,8 +23,8 @@ func (db *DBhdlr) SetEditFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 		return
 	}
-	
-	if !validateFilename(filename) {
+
+	if !utils.ValidateFilename(filename) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Extension not allowed"})
 		return
 	}
@@ -35,7 +37,7 @@ func (db *DBhdlr) SetEditFile(c *gin.Context) {
 		Editorial: editorial,
 		ID:        int32(id),
 	})
-	
+
 	if err != nil {
 		slog.Error("cannot convert the page parameter on search file")
 		c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})

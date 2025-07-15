@@ -4,9 +4,28 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 )
 
-func SaveThumbnailToStatic(thumbnailData []byte, filename string) error {
+func MakeThumbnail(data []byte, thumb *[]byte, filename string) error {
+
+	thumbnail, err := generateWebpThumbnail(data, "static/thumbnails/")
+	err = saveThumbnailToStatic(thumbnail, filename)
+
+	if err != nil {
+		return err
+	}
+	*thumb = thumbnail
+
+	return nil
+}
+
+func ValidateFilename(filename string) bool {
+	match, _ := regexp.MatchString("^.+(pdf|md)$", filename)
+	return match
+}
+
+func saveThumbnailToStatic(thumbnailData []byte, filename string) error {
 	dir := "static/thumbnails"
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -18,7 +37,7 @@ func SaveThumbnailToStatic(thumbnailData []byte, filename string) error {
 	return os.WriteFile(path, thumbnailData, 0644)
 }
 
-func GenerateWebpThumbnail(pdfBytes []byte, path string) ([]byte, error) {
+func generateWebpThumbnail(pdfBytes []byte, path string) ([]byte, error) {
 
 	pdfFile, err := os.CreateTemp("", "input-*.pdf")
 

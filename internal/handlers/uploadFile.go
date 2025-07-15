@@ -5,7 +5,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -14,39 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mrz1836/go-sanitize"
 )
-
-func makeThumbnail(data []byte, thumb *[]byte, filename string, c *gin.Context) error {
-
-	thumbnail, err := utils.GenerateWebpThumbnail(data, "static/thumbnails/")
-
-	if err != nil {
-
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong"})
-
-		return err
-	}
-
-	err = utils.SaveThumbnailToStatic(thumbnail, filename)
-
-	if err != nil {
-
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong"})
-
-		return err
-	}
-
-	*thumb = thumbnail
-
-	return nil
-}
-
-func validateFilename(filename string) bool {
-	match, _ := regexp.MatchString("^.+(pdf|md)$", filename)
-	log.Println(match)
-	return match
-}
 
 func (db *DBhdlr) UploadFile(c *gin.Context) {
 
@@ -65,7 +31,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		return
 	}
 
-	if !validateFilename(file.Filename) {
+	if !utils.ValidateFilename(file.Filename) {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "File type is not allowed"})
 		return
 	}
@@ -104,7 +70,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	}
 
 	if strings.Contains(file.Filename, "pdf") {
-		err := makeThumbnail(data, &thumbnail, strconv.Itoa(int(id)), c)
+		err := utils.MakeThumbnail(data, &thumbnail, strconv.Itoa(int(id)))
 
 		if err != nil {
 			log.Println(err)
