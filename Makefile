@@ -8,6 +8,8 @@ TARGET=gochive
 BACKUP_NAME=archive_db.$(DATE).gz
 PATH_BACKUP=/tmp/$(BACKUP_NAME)
 
+DOCKER_DB=archive_db
+
 all:
 	go run $(ENTRY)
 
@@ -18,16 +20,17 @@ clean:
 	rm $(TARGET)
 
 backup:
-	docker exec -it archive_db pg_dump -U $(DB_USER) -d $(DB_NAME) | gzip > $(PATH_BACKUP)
+	docker exec -it $(DOCKER_DB) pg_dump -U $(DB_USER) -d $(DB_NAME) | gzip > $(PATH_BACKUP)
 
 restore:
-	gunzip -c $(PATH_BACKUP) | docker exec -i archive_db psql -U $(DB_USER) -h 127.0.0.1 -d $(DB_NAME)
+	gunzip -c $(PATH_BACKUP) | docker exec -i $(DOCKER_DB) psql -U $(DB_USER) -h $(DB_HOST) -d $(DB_NAME)
 
 test:
 	go test ./...
 
 sqlc:
-	sqlc generate 
+	sqlc generate
 
 db:
-	docker exec -it archive_db psql -U $(DB_USER) -d $(DB_NAME)
+	docker exec -it $(DOCKER_DB) psql -U $(DB_USER) -d $(DB_NAME)
+

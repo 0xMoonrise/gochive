@@ -21,7 +21,6 @@ func makeThumbnail(data []byte, thumb *[]byte, filename string, c *gin.Context) 
 
 	if err != nil {
 
-		slog.Error("cannot generate the thumbnail")
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong"})
 
@@ -32,7 +31,6 @@ func makeThumbnail(data []byte, thumb *[]byte, filename string, c *gin.Context) 
 
 	if err != nil {
 
-		slog.Error("cannot generate the thumbnail")
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong"})
 
@@ -83,6 +81,8 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	data, err := io.ReadAll(rawFile)
 
 	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 		return
 	}
 
@@ -98,6 +98,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	id, err := db.Query.InsertFile(c, insertFile)
 
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "DB insert failed"})
 		return
 	}
@@ -106,6 +107,8 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		err := makeThumbnail(data, &thumbnail, strconv.Itoa(int(id)), c)
 
 		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 			return
 		}
 
@@ -115,6 +118,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		})
 
 		if err != nil {
+			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 			return
 		}

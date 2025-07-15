@@ -18,10 +18,10 @@ func (db *DBhdlr) SetEditFile(c *gin.Context) {
 
 	if err != nil {
 		slog.Error("cannot convert the page parameter on search file")
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong..."})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 		return
 	}
-
+	
 	if !validateFilename(filename) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "Extension not allowed"})
 		return
@@ -35,10 +35,10 @@ func (db *DBhdlr) SetEditFile(c *gin.Context) {
 		Editorial: editorial,
 		ID:        int32(id),
 	})
-
+	
 	if err != nil {
 		slog.Error("cannot convert the page parameter on search file")
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong..."})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 		return
 	}
 
