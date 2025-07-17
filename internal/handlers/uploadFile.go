@@ -22,17 +22,17 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	if err != nil {
 		slog.Error("something went wrong while uploading the a file")
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
 		return
 	}
 
 	if file.Size == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "File is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "File is empty"})
 		return
 	}
 
 	if !utils.ValidateFilename(file.Filename) {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "File type is not allowed"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "File type is not allowed"})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "DB insert failed"})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "DB insert failed"})
 		return
 	}
 

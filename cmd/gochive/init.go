@@ -2,7 +2,6 @@ package main
 
 import (
 	"log/slog"
-
 	"github.com/joho/godotenv"
 )
 

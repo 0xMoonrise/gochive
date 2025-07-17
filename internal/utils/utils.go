@@ -7,9 +7,13 @@ import (
 	"regexp"
 )
 
+const (
+	pathThumbnail = "static/thumbnails/"
+)
+
 func MakeThumbnail(data []byte, thumb *[]byte, filename string) error {
 
-	thumbnail, err := generateWebpThumbnail(data, "static/thumbnails/")
+	thumbnail, err := generateWebpThumbnail(data)
 	err = saveThumbnailToStatic(thumbnail, filename)
 
 	if err != nil {
@@ -25,19 +29,17 @@ func ValidateFilename(filename string) bool {
 	return match
 }
 
-func saveThumbnailToStatic(thumbnailData []byte, filename string) error {
-	dir := "static/thumbnails"
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
+func saveThumbnailToStatic(thumbnail []byte, filename string) error {
+	path := filepath.Join(pathThumbnail, filename)
+	
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
 	}
 
-	path := filepath.Join(dir, filename)
-
-	return os.WriteFile(path, thumbnailData, 0644)
+	return os.WriteFile(path, thumbnail, 0644)
 }
 
-func generateWebpThumbnail(pdfBytes []byte, path string) ([]byte, error) {
+func generateWebpThumbnail(pdfBytes []byte) ([]byte, error) {
 
 	pdfFile, err := os.CreateTemp("", "input-*.pdf")
 

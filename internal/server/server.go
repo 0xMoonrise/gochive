@@ -4,6 +4,8 @@ import (
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/gin-gonic/gin"
+
+	"log"
 )
 
 func NewServer(cfg *database.Queries) *gin.Engine {
@@ -11,7 +13,7 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 	r := gin.Default()
 
 	hdlr := handlers.Handler(cfg)
-
+	log.Println("hello wolrd!")
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./static")
 
