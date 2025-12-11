@@ -17,7 +17,6 @@ import (
 func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 	file, err := c.FormFile("file")
-	var thumbnail []byte
 
 	if err != nil {
 		slog.Error("something went wrong while uploading the a file")
@@ -44,7 +43,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 
 	defer rawFile.Close()
 
-	data, err := io.ReadAll(rawFile)
+	rawData, err := io.ReadAll(rawFile)
 
 	if err != nil {
 		log.Println(err)
@@ -52,13 +51,12 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		return
 	}
 
-	thumbnail = nil
 	filename := sanitize.XSS(file.Filename)
 
 	insertFile := database.InsertFileParams{
 		Filename:  filename,
 		Editorial: "Default",
-		File:      data,
+		File:      rawData,
 	}
 
 	id, err := db.Query.InsertFile(c, insertFile)
@@ -70,7 +68,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	}
 
 	if strings.Contains(file.Filename, "pdf") {
-		err := utils.MakeThumbnail(data, &thumbnail, strconv.Itoa(int(id)))
+		err, thumbnail := utils.MakeThumbnail(rawData, strconv.Itoa(int(id)))
 
 		if err != nil {
 			log.Println(err)

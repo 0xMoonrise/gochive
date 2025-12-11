@@ -1,93 +1,90 @@
 package utils
 
 import (
+	"bytes"
+	"fmt"
+	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
+	"time"
+
+	"github.com/chai2010/webp"
+	"github.com/klippa-app/go-pdfium"
+	"github.com/klippa-app/go-pdfium/requests"
+	"github.com/klippa-app/go-pdfium/single_threaded"
 )
 
-const (
-	pathThumbnail = "static/thumbnails"
-)
+var pathThumbnail = "static/thumbnails"
+var pool pdfium.Pool
+var instance pdfium.Pdfium
 
-func MakeThumbnail(data []byte, thumb *[]byte, filename string) error {
-
-	thumbnail, err := generateWebpThumbnail(data)
-	err = saveThumbnailToStatic(thumbnail, filename)
+func renderPage(file []byte, page int, output string) (error, []byte) {
+	var rawImage bytes.Buffer
+	pool = single_threaded.Init(single_threaded.Config{})
+	instance, err := pool.GetInstance(time.Second * 30)
 
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	*thumb = thumbnail
 
-	return nil
+	doc, err := instance.OpenDocument(&requests.OpenDocument{
+		File: &file,
+	})
+
+	if err != nil {
+		return err, nil
+	}
+
+	defer instance.FPDF_CloseDocument(&requests.FPDF_CloseDocument{
+		Document: doc.Document,
+	})
+
+	pageRender, err := instance.RenderPageInDPI(&requests.RenderPageInDPI{
+		DPI: 200,
+		Page: requests.Page{
+			ByIndex: &requests.PageByIndex{
+				Document: doc.Document,
+				Index:    page,
+			},
+		},
+	})
+
+	if err != nil {
+		return err, nil
+	}
+
+	err = webp.Encode(&rawImage, pageRender.Result.Image, &webp.Options{Quality: 100})
+	if err != nil {
+		return err, nil
+	}
+
+	f, err := os.Create(fmt.Sprintf("%s/%s", pathThumbnail, output))
+	if err != nil {
+		return err, nil
+	}
+	defer f.Close()
+
+	_, err = f.Write(rawImage.Bytes())
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, rawImage.Bytes()
+}
+
+func MakeThumbnail(rawFile []byte, filename string) (error, []byte) {
+
+	err, rawImage := renderPage(rawFile, 0, filename)
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, rawImage
 }
 
 func ValidateFilename(filename string) bool {
+
 	match, _ := regexp.MatchString("^.+(pdf|md)$", filename)
 	return match
-}
 
-func saveThumbnailToStatic(thumbnail []byte, filename string) error {
-	path := filepath.Join(pathThumbnail, filename)
-	_, err := os.Stat(pathThumbnail)
-	
-	if err != nil {
-		return nil
-	}
-	
-	return os.WriteFile(path, thumbnail, 0644)
-}
-
-func generateWebpThumbnail(pdfBytes []byte) ([]byte, error) {
-
-	pdfFile, err := os.CreateTemp("", "input-*.pdf")
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer os.Remove(pdfFile.Name())
-
-	if _, err := pdfFile.Write(pdfBytes); err != nil {
-		pdfFile.Close()
-		return nil, err
-	}
-
-	pdfFile.Close()
-
-	outputPrefix := filepath.Join(os.TempDir(), "outthumb")
-	cmd := exec.Command("pdftoppm", "-f", "1", "-l", "1", "-singlefile", "-png", pdfFile.Name(), outputPrefix)
-
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-
-	pngPath := outputPrefix + ".png"
-	defer os.Remove(pngPath)
-
-	webpFile, err := os.CreateTemp("", "thumb-*.webp")
-
-	if err != nil {
-		return nil, err
-	}
-
-	webpPath := webpFile.Name()
-	webpFile.Close()
-	defer os.Remove(webpPath)
-
-	cmdWebp := exec.Command("cwebp", pngPath, "-o", webpPath)
-
-	if err := cmdWebp.Run(); err != nil {
-		return nil, err
-	}
-
-	webpData, err := os.ReadFile(webpPath)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return webpData, nil
 }
