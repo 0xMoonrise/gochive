@@ -4,10 +4,6 @@ DATE := $(shell date '+%Y-%m-%d')
 
 ENTRY=./cmd/gochive
 TARGET=gochive
-
-BACKUP_NAME=archive_db.$(DATE).gz
-PATH_BACKUP=/tmp/$(BACKUP_NAME)
-
 DOCKER_DB=archive_db
 
 all:

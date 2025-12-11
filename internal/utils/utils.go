@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	pathThumbnail = "static/thumbnails/"
+	pathThumbnail = "static/thumbnails"
 )
 
 func MakeThumbnail(data []byte, thumb *[]byte, filename string) error {
@@ -31,11 +31,12 @@ func ValidateFilename(filename string) bool {
 
 func saveThumbnailToStatic(thumbnail []byte, filename string) error {
 	path := filepath.Join(pathThumbnail, filename)
+	_, err := os.Stat(pathThumbnail)
 	
-	if err := os.MkdirAll(path, 0755); err != nil {
-		return err
+	if err != nil {
+		return nil
 	}
-
+	
 	return os.WriteFile(path, thumbnail, 0644)
 }
 
