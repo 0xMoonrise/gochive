@@ -9,6 +9,11 @@ import (
 func NewServer(cfg *database.Queries) *gin.Engine {
 
 	r := gin.Default()
+
+	// change this if you need to trust proxies
+	// see https://gin-gonic.com/es/docs/deployment/#dont-trust-all-proxies
+	r.SetTrustedProxies(nil)
+
 	hdlr := handlers.Handler(cfg)
 
 	r.LoadHTMLGlob("templates/*")
