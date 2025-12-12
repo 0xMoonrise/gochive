@@ -1,7 +1,5 @@
 # Gochive
 
----
-
 This is a personal project to store, back up, and centralize PDF documents, books, and articles. The main goal of this project is to practice and improve my development skills.
 
 config `.env`
