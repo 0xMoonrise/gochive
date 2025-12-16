@@ -10,7 +10,7 @@
 
 - [ ] Rename and improve the semantic code
 
-- [ ] Simplify the `main.go` code
+- [x] Simplify the `main.go` code
 
 ### Development
 
