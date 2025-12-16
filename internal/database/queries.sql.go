@@ -11,7 +11,7 @@ import (
 )
 
 const getArchive = `-- name: GetArchive :one
-SELECT id, filename, editorial, cover_page, file, favorite, thumbnail_image, created_at FROM archive_schema.archive WHERE id = $1 LIMIT 1
+SELECT id, filename, editorial, cover_page, file, favorite, thumbnail_image, created_at, bookmark FROM archive_schema.archive WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error) {
@@ -26,6 +26,7 @@ func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchiv
 		&i.Favorite,
 		&i.ThumbnailImage,
 		&i.CreatedAt,
+		&i.Bookmark,
 	)
 	return i, err
 }

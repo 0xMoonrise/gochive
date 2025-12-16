@@ -17,4 +17,6 @@ type ArchiveSchemaArchive struct {
 	Favorite       bool      `json:"favorite"`
 	ThumbnailImage []byte    `json:"thumbnail_image"`
 	CreatedAt      time.Time `json:"created_at"`
+	// Porcentaje de progreso de lectura (0.0 a 1.0)
+	Bookmark float64 `json:"bookmark"`
 }
