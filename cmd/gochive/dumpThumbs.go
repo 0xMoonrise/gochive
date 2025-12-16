@@ -8,38 +8,43 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/database"
 )
 
-func dumpImages(path string, db *database.Queries) {
+func dumpThumbnails(db *database.Queries) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	data, err := db.GetThumbnails(ctx)
+
+	thumbnails, err := db.GetThumbnails(ctx)
 
 	if err != nil {
-		slog.Error("something went wrong while trying to dump the thumbnails")
+		slog.Error("failed to fetch thumbnails", "err", err)
 		return
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.MkdirAll(path, 0755)
-		if err != nil {
-			slog.Error("Something went wrong creating the dir")
+	if _, err := os.Stat(config.THUMB_PATH); os.IsNotExist(err) {
+		slog.Warn("thumbnail directory does not exist, creating", "path", config.THUMB_PATH)
+
+		if err := os.MkdirAll(config.THUMB_PATH, 0755); err != nil {
+			slog.Error("failed to create thumbnail directory", "path", config.THUMB_PATH, "err", err)
 			return
 		}
 	}
 	
-	for _, image := range data {
-		path := filepath.Join(path, strconv.Itoa(int(image.ID)))
+	// goroutines for parallelism? 
 
-		_, err := os.Stat(path)
+	for _, thumbnail := range thumbnails {
 
-		if err == nil || !os.IsNotExist(err) {
-			continue
+		thumbToWrite := filepath.Join(
+			config.THUMB_PATH,
+			strconv.Itoa(int(thumbnail.ID)),
+		)
+
+		if err := os.WriteFile(thumbToWrite, thumbnail.ThumbnailImage, 0644); err != nil {
+			slog.Debug("thumbnail write skipped", "id", thumbnail.ID)
 		}
-
-		os.WriteFile(path, image.ThumbnailImage, 0644)
 
 	}
 }

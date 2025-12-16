@@ -1,41 +1,40 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"log/slog"
 	"os"
 
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/server"
+	"github.com/joho/godotenv"
+
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	slog.Info("Init app")
-	err := Init() // Should I just load from file or also env vars?
+
+	err := godotenv.Load()
 
 	if err != nil {
-		log.Fatal("An error occured:", err)
+		log.Fatal(err)
 	}
 
 	port := os.Getenv("PORT")
 	host := os.Getenv("HOST")
-	addr := fmt.Sprintf("%s:%s", host, port)
 
-	conn, err := config.LoadConfig()
+	conn, err := config.InitDataBase()
 
 	if err != nil {
-		slog.Error("Database is not connected")
 		log.Fatal(err)
 	}
 
 	defer conn.Close()
-	db := database.New(conn)
 
-	dumpImages("static/thumbnails/", db)
+	database := database.New(conn)
+	dumpThumbnails(database)
+	
+	server := server.NewServer(database)
+	server.Run(host + ":" + port)
 
-	server := server.NewServer(db)
-	server.Run(addr)
 }

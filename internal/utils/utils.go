@@ -2,19 +2,19 @@ package utils
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"time"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/chai2010/webp"
 	"github.com/klippa-app/go-pdfium"
 	"github.com/klippa-app/go-pdfium/requests"
 	"github.com/klippa-app/go-pdfium/single_threaded"
 )
 
-var pathThumbnail = "static/thumbnails"
 var pool pdfium.Pool
 var instance pdfium.Pdfium
 
@@ -58,7 +58,7 @@ func renderPage(file []byte, page int, output string) (error, []byte) {
 		return err, nil
 	}
 
-	f, err := os.Create(fmt.Sprintf("%s/%s", pathThumbnail, output))
+	f, err := os.Create(filepath.Join(config.THUMB_PATH, output))
 	if err != nil {
 		return err, nil
 	}

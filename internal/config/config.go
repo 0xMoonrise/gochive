@@ -1,29 +1,41 @@
 package config
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"log/slog"
 	"os"
+	"time"
 )
 
-func LoadConfig() (*sql.DB, error) {
+func InitDataBase() (*sql.DB, error) {
 
-	db_user := os.Getenv("DB_USER")
-	db_pass := os.Getenv("DB_PASS")
-	db_host := os.Getenv("DB_HOST")
-	db_port := os.Getenv("DB_PORT")
-	db_name := os.Getenv("DB_NAME")
+	databaseUri := os.Getenv("DB_URI")
 
-	slog.Info("Loading db config")
+	if databaseUri == "" {
+		return nil, errors.New("DB_URI is not set")
+	}
 
-	db_uri := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", db_user, db_pass, db_host, db_port, db_name)
-	db, err := sql.Open("postgres", db_uri)
+	slog.Info("Initializing database connection")
 
-	// Should I shut down the web server if it can't connect to the database?
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, err := sql.Open("postgres", databaseUri)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	if err := conn.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
+	conn.SetMaxOpenConns(5)
+	conn.SetMaxIdleConns(2)
+	
+	slog.Info("Database connected successfully")
+
+	return conn, nil
 }
