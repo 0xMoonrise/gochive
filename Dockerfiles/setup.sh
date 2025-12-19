@@ -5,7 +5,7 @@ ARCH=$(uname -m)
 DOWNLOAD_DIR="/tmp/pdfium"
 case "$ARCH" in
   x86_64)
-    TAR="pdfium-linux-x86.tgz"
+    TAR="pdfium-linux-x64.tgz"
     ;;
   aarch64)
     TAR="pdfium-linux-arm64.tgz"
