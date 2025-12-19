@@ -10,7 +10,7 @@ import (
 )
 
 func InitDataBase() (*sql.DB, error) {
-
+	
 	databaseUri := os.Getenv("DB_URI")
 
 	if databaseUri == "" {

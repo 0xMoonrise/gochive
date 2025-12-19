@@ -1,13 +1,12 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/server"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -15,7 +14,6 @@ import (
 func main() {
 
 	err := godotenv.Load()
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,7 +31,7 @@ func main() {
 
 	database := database.New(conn)
 	dumpThumbnails(database)
-	
+
 	server := server.NewServer(database)
 	server.Run(host + ":" + port)
 
