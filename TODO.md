@@ -16,3 +16,9 @@
 
 - [ ] Create unit / integration tests
 
+- [ ] Build a docker container for database implementation
+
+### Interface (client side)
+
+- [ ] Improve the html with html/template instead of javascript
+
