@@ -1,9 +1,7 @@
 services:
   postgres:
-    build:
-      context: .
-      dockerfile: Dockerfiles/Dockerfile.db
-    container_name: archive_db
+    image: postgres:16
+    container_name: gochive_db
     ports:
       - "5432:5432"
     environment:
@@ -17,7 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfiles/Dockerfile.app
-    container_name: archive_app
+    container_name: gochive_app
     environment:
       - DB_HOST=postgres
     ports:

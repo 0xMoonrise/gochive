@@ -4,7 +4,7 @@ DATE := $(shell date '+%Y-%m-%d')
 
 ENTRY=./cmd/gochive
 TARGET=gochive
-DOCKER_DB=db-test
+DOCKER_DB=gochive_db
 
 .PHONY: db 
 
