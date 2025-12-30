@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/0xMoonrise/gochive/internal/database"
 )
 
-func dumpThumbnails(db *database.Queries) {
+func DumpThumbnails(db *database.Queries) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
@@ -41,7 +41,7 @@ func dumpThumbnails(db *database.Queries) {
 			config.THUMB_PATH,
 			strconv.Itoa(int(thumbnail.ID)),
 		)
-
+		
 		if err := os.WriteFile(thumbToWrite, thumbnail.ThumbnailImage, 0644); err != nil {
 			slog.Debug("thumbnail write skipped", "id", thumbnail.ID)
 		}

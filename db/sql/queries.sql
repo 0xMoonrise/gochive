@@ -71,3 +71,20 @@ SET
 	filename=$1, 
 	editorial=$2
 WHERE id=$3;
+
+-- name: CreateSchema :exec
+CREATE SCHEMA IF NOT EXISTS archive_schema;
+
+-- name: CreateArchiveTable :exec
+CREATE TABLE IF NOT EXISTS archive_schema.archive (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    filename TEXT NOT NULL,
+    editorial TEXT NOT NULL,
+    cover_page INTEGER NOT NULL DEFAULT 1,
+    file BYTEA NOT NULL,
+    favorite BOOLEAN NOT NULL DEFAULT FALSE,
+    thumbnail_image BYTEA,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT check_cover_page_positive CHECK (cover_page >= 1)
+);
+

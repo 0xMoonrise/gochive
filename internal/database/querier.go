@@ -10,6 +10,8 @@ import (
 )
 
 type Querier interface {
+	CreateArchiveTable(ctx context.Context) error
+	CreateSchema(ctx context.Context) error
 	GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error)
 	GetArchiveByName(ctx context.Context) (string, error)
 	GetArchivePage(ctx context.Context, arg GetArchivePageParams) ([]GetArchivePageRow, error)

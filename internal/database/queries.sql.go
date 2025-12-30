@@ -10,6 +10,34 @@ import (
 	"database/sql"
 )
 
+const createArchiveTable = `-- name: CreateArchiveTable :exec
+CREATE TABLE IF NOT EXISTS archive_schema.archive (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    filename TEXT NOT NULL,
+    editorial TEXT NOT NULL,
+    cover_page INTEGER NOT NULL DEFAULT 1,
+    file BYTEA NOT NULL,
+    favorite BOOLEAN NOT NULL DEFAULT FALSE,
+    thumbnail_image BYTEA,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT check_cover_page_positive CHECK (cover_page >= 1)
+)
+`
+
+func (q *Queries) CreateArchiveTable(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createArchiveTable)
+	return err
+}
+
+const createSchema = `-- name: CreateSchema :exec
+CREATE SCHEMA IF NOT EXISTS archive_schema
+`
+
+func (q *Queries) CreateSchema(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, createSchema)
+	return err
+}
+
 const getArchive = `-- name: GetArchive :one
 SELECT id, filename, editorial, cover_page, file, favorite, thumbnail_image, created_at, bookmark FROM archive_schema.archive WHERE id = $1 LIMIT 1
 `

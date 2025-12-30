@@ -4,7 +4,9 @@ DATE := $(shell date '+%Y-%m-%d')
 
 ENTRY=./cmd/gochive
 TARGET=gochive
-DOCKER_DB=archive_db
+DOCKER_DB=db-test
+
+.PHONY: db 
 
 all:
 	go run $(ENTRY)
@@ -23,9 +25,6 @@ restore:
 
 test:
 	go test ./...
-
-sqlc:
-	sqlc generate
 
 db:
 	docker exec -it $(DOCKER_DB) psql -U $(DB_USER) -d $(DB_NAME)
