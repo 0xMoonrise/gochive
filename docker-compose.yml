@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17.5
     container_name: gochive_db
     ports:
       - "5432:5432"
