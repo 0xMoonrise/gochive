@@ -1,0 +1,24 @@
+.page {
+    background-color: #111 !important;
+}
+
+.page canvas {
+    filter: 
+        invert(0.98)
+        sepia(0.02)
+        saturate(1.2)
+        brightness(1.1)
+        contrast(1.05) !important;
+    
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+.annotationLayer .popupWrapper,
+.annotationLayer .highlight {
+    filter: invert(1) hue-rotate(180deg) brightness(1.2) !important;
+}
+
+.annotationLayer .linkAnnotation > a {
+    filter: invert(1) hue-rotate(180deg) !important;
+}

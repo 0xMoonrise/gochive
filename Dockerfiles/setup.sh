@@ -2,7 +2,9 @@
 set -e
 
 ARCH=$(uname -m)
-DOWNLOAD_DIR="/tmp/pdfium"
+TMP=/tmp/pdfium
+mkdir -p $TMP
+
 case "$ARCH" in
   x86_64)
     TAR="pdfium-linux-x64.tgz"
@@ -16,20 +18,18 @@ case "$ARCH" in
     ;;
 esac
 
-mkdir -p $DOWNLOAD_DIR
-wget -q "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/$TAR" -P /tmp/
-tar -xzf "/tmp/$TAR" -C $DOWNLOAD_DIR
+wget -q \
+  "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/$TAR" \
+  -O "/tmp/$TAR"
 
-tee /etc/profile.d/pdfium.sh > /dev/null <<'EOF'
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-EOF
+tar -xzf "/tmp/$TAR" -C "$TMP"
 
-cp -r $DOWNLOAD_DIR/lib/* /usr/local/lib/
-cp -r $DOWNLOAD_DIR/include/* /usr/local/include/
+cp "$TMP/lib/libpdfium.so" /usr/local/lib/
+
+cp -r "$TMP/include/"* /usr/local/include/
 
 mkdir -p /usr/local/lib/pkgconfig
-
-. $DOWNLOAD_DIR/VERSION
+. "$TMP/VERSION"
 
 cat > /usr/local/lib/pkgconfig/pdfium.pc <<EOF
 prefix=/usr/local
@@ -43,3 +43,5 @@ Version: $MAJOR.$MINOR.$BUILD.$PATCH
 Libs: -L\${libdir} -lpdfium
 Cflags: -I\${includedir}
 EOF
+
+ldconfig

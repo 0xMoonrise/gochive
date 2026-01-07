@@ -183,7 +183,7 @@ function createEditButton(file){
 
 function createCardElement(file) {
     const cardContainer = document.createElement("div");
-	const buttonContainer = document.createElement("div");
+	  const buttonContainer = document.createElement("div");
 
     cardContainer.className = "card-container";
     buttonContainer.className = "button-container";
@@ -214,8 +214,8 @@ function createCardElement(file) {
     card.appendChild(title);
 
     buttonContainer.appendChild(createFavoriteButton(file));
-	buttonContainer.appendChild(createEditButton(file));
-	cardContainer.appendChild(buttonContainer);
+	  buttonContainer.appendChild(createEditButton(file));
+	  cardContainer.appendChild(buttonContainer);
     cardContainer.appendChild(card);
 
     document.querySelector(".card-list").appendChild(cardContainer);

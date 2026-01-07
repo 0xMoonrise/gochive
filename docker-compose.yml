@@ -16,10 +16,16 @@ services:
       context: .
       dockerfile: Dockerfiles/Dockerfile.app
     container_name: gochive_app
-    environment:
-      - DB_HOST=postgres
     ports:
-      - "8080:8080"
+      - "0.0.0.0:8080:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - HOST=${HOST}
+      - PORT=${PORT}
     depends_on:
       - postgres
       

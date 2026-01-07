@@ -68,7 +68,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 	}
 
 	if strings.Contains(file.Filename, "pdf") {
-		err, thumbnail := utils.MakeThumbnail(rawData, strconv.Itoa(int(id)))
+		thumbnail, err := utils.MakeThumbnail(rawData, strconv.Itoa(int(id)))
 
 		if err != nil {
 			log.Println(err)

@@ -16,9 +16,9 @@ import (
 )
 
 var pool pdfium.Pool
-var instance pdfium.Pdfium
 
-func renderPage(file []byte, page int, output string) (error, []byte) {
+// var instance pdfium.Pdfium
+func renderPage(file []byte, page int, output string) ([]byte, error) {
 	var rawImage bytes.Buffer
 	pool = single_threaded.Init(single_threaded.Config{})
 	instance, err := pool.GetInstance(time.Second * 30)
@@ -32,7 +32,7 @@ func renderPage(file []byte, page int, output string) (error, []byte) {
 	})
 
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	defer instance.FPDF_CloseDocument(&requests.FPDF_CloseDocument{
@@ -50,36 +50,36 @@ func renderPage(file []byte, page int, output string) (error, []byte) {
 	})
 
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	err = webp.Encode(&rawImage, pageRender.Result.Image, &webp.Options{Quality: 100})
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	f, err := os.Create(filepath.Join(config.THUMB_PATH, output))
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer f.Close()
 
 	_, err = f.Write(rawImage.Bytes())
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
-	return nil, rawImage.Bytes()
+	return rawImage.Bytes(), nil
 }
 
-func MakeThumbnail(rawFile []byte, filename string) (error, []byte) {
+func MakeThumbnail(rawFile []byte, filename string) ([]byte, error) {
 
-	err, rawImage := renderPage(rawFile, 0, filename)
+	rawImage, err := renderPage(rawFile, 0, filename)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
-	return nil, rawImage
+	return rawImage, nil
 }
 
 func ValidateFilename(filename string) bool {

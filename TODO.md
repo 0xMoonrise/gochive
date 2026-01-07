@@ -22,3 +22,4 @@
 
 - [ ] Improve the html with html/template instead of javascript
 
+- [ ] Fix the bug that causes an "image not found" error when uploading a PDF from the web page.
