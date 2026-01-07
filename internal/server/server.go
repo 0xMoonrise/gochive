@@ -21,7 +21,7 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 
 	r.GET("/", handlers.Root)
 	r.GET("/view", handlers.ViewFile)
-	
+
 	r.GET("/get_file/:id", hdlr.GetFile)
 	r.GET("/get_files/:page", hdlr.GetFiles)
 
@@ -29,6 +29,6 @@ func NewServer(cfg *database.Queries) *gin.Engine {
 	r.POST("/search/:page", hdlr.SearchFiles)
 	r.POST("/set_favorite/:id", hdlr.SetFavorite)
 	r.POST("/edit/:id", hdlr.SetEditFile)
-	
+
 	return r
 }

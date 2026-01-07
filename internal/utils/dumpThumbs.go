@@ -32,8 +32,8 @@ func DumpThumbnails(db *database.Queries) {
 			return
 		}
 	}
-	
-	// goroutines for parallelism? 
+
+	// goroutines for parallelism?
 
 	for _, thumbnail := range thumbnails {
 
@@ -41,7 +41,7 @@ func DumpThumbnails(db *database.Queries) {
 			config.THUMB_PATH,
 			strconv.Itoa(int(thumbnail.ID)),
 		)
-		
+
 		if err := os.WriteFile(thumbToWrite, thumbnail.ThumbnailImage, 0644); err != nil {
 			slog.Debug("thumbnail write skipped", "id", thumbnail.ID)
 		}

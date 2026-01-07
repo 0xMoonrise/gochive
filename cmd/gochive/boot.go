@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,71 +14,82 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func loadDB(db *sql.DB, q *database.Queries) error {
-  ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-  defer cancel()
-  if err := q.CreateSchema(ctx); err != nil {
-    return err
-  }
+func bootSchema(q *database.Queries) error {
 
-  if err := q.CreateArchiveTable(ctx); err != nil {
-    return err
-  }
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
 
-  if err := goose.SetDialect("postgres"); err != nil {
-    return err
-  }
+	if err := q.CreateSchema(ctx); err != nil {
+		return err
+	}
 
-  cwd, _ := os.Getwd()
-  if err := goose.Up(db, filepath.Join(cwd, "db", "migrations")); err != nil {
-    return err
-  }
+	if err := q.CreateArchiveTable(ctx); err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
 
+func bootMigrations(db *sql.DB) error {
 
-func InitDataBase() (*sql.DB, error) {
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
 
-  databaseUri := fmt.Sprintf(
-    "postgresql://%s:%s@%s:%s/%s?sslmode=disable",
-    os.Getenv("DB_USER"),
-    os.Getenv("DB_PASS"),
-    os.Getenv("DB_HOST"),
-    os.Getenv("DB_PORT"),
-    os.Getenv("DB_NAME"),
-  )
+	cwd, _ := os.Getwd()
 
-  slog.Info("Initializing database connection")
+	if err := goose.Up(db, filepath.Join(cwd, "db", "migrations")); err != nil {
+		return err
+	}
 
-  for i := range MAX_RETRIES {
-    conn, err = sql.Open("postgres", databaseUri)
-    if err == nil {
-      err = conn.Ping()
-    }
+	return nil
+}
 
-    if err == nil {
-      break
-    }
+func connectDB() (db *sql.DB, err error) {
 
-    slog.Warn(
-      "Cannot connect to database, retrying",
-      "attempt", i,
-      "max", MAX_RETRIES,
-      "error", err,
-    )
+	u := &url.URL{
+		Scheme: "postgresql",
+		User: url.UserPassword(
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASS"),
+		),
+		Host: os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT"),
+		Path: os.Getenv("DB_NAME"),
+	}
 
-    time.Sleep(2 * time.Second)
-  }
+	q := u.Query()
+	q.Set("sslmode", "disable")
+	u.RawQuery = q.Encode()
 
-  if err != nil {
-    return nil, fmt.Errorf("database unavailable after %d attempts: %w", MAX_RETRIES, err)
-  }
+	slog.Info("Initializing database connection")
+	for i := range MAX_RETRIES {
+		db, err = sql.Open("postgres", u.String())
+		if err == nil {
+			err = db.Ping()
+		}
 
-  conn.SetMaxOpenConns(5)
-  conn.SetMaxIdleConns(2)
+		if err == nil {
+			break
+		}
 
-  slog.Info("Database connected successfully")
+		slog.Warn(
+			"Cannot connect to database, retrying",
+			"attempt", i,
+			"max", MAX_RETRIES,
+			"error", err,
+		)
 
-  return conn, nil
+		time.Sleep(2 * time.Second)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("database unavailable after %d attempts: %w", MAX_RETRIES, err)
+	}
+
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(2)
+
+	slog.Info("Database connected successfully")
+
+	return db, nil
 }

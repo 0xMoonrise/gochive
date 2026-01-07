@@ -1,9 +1,9 @@
 package main
 
 import (
-  "database/sql"
-  "os"
 	"log/slog"
+	"net"
+	"os"
 
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/server"
@@ -14,36 +14,46 @@ import (
 
 const MAX_RETRIES = 3
 
-var (
-  conn *sql.DB
-  err error
-)
+func run() error {
 
-func main() {
-	
 	if err := godotenv.Load(); err != nil {
 		slog.Info(".env not loaded")
 	}
 
-	conn, err := InitDataBase()
+	db, err := connectDB()
 	if err != nil {
-		panic(err)
+		return err
 	}
-	
-	defer conn.Close()
-	database := database.New(conn)
 
-	if err := loadDB(conn, database); err != nil {
-		panic(err)
+	defer db.Close()
+	database := database.New(db)
+
+	if err := bootSchema(database); err != nil {
+		return err
+	}
+
+	if err := bootMigrations(db); err != nil {
+		return err
 	}
 
 	utils.DumpThumbnails(database)
 
-	port := os.Getenv("PORT")
-	host := os.Getenv("HOST")
-
 	server := server.NewServer(database)
-	server.Run(host + ":" + port)
+	addr := net.JoinHostPort(os.Getenv("HOST"), os.Getenv("PORT"))
+
+	if err := server.Run(addr); err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
+func main() {
+
+	if err := run(); err != nil {
+		slog.Error("fatal:", "error", err)
+		os.Exit(1)
+	}
+
+}
