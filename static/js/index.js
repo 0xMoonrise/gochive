@@ -199,7 +199,7 @@ function createCardElement(file) {
   const card = document.createElement("a");
   card.className = "card";
   card.href = file.filename.includes('.pdf') ?
-    `web/viewer.html?file=/get_file/${file.id}` : `get_file/${file.id}`;
+    `web/viewer.html?file=/${file.id}` : `get_file/${file.id}`;
 
   const title = document.createElement("div");
   title.className = "card-title";

@@ -29,11 +29,7 @@ func (db *DBhdlr) GetFile(c *gin.Context) {
 	}
 	// Maybe support other kind of files?
 	if strings.Contains(data.Filename, "pdf") {
-
-		c.Header("Content-Type", "application/pdf")
-		c.Writer.WriteHeader(http.StatusOK)
-		c.Writer.Write(data.File)
-
+		c.Data(http.StatusOK, "application/pdf", data.File)
 	}
 
 	if strings.Contains(data.Filename, "md") { // should I assume that I will never store anything else but md and pdf?
