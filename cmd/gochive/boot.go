@@ -14,6 +14,8 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
+const MAX_RETRIES = 3
+
 func bootSchema(q *database.Queries) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)

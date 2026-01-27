@@ -12,8 +12,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const MAX_RETRIES = 3
-
 func run() error {
 
 	if err := godotenv.Load(); err != nil {
