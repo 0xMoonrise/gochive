@@ -208,7 +208,7 @@ function createCardElement(file) {
   if (file.filename.includes('.pdf')) {
     const img = document.createElement("img");
     img.className = "card-thumbnail";
-    img.src = `static/thumbnails/${file.id}`;
+    img.src = `images/${file.id}`;
     card.appendChild(img);
   } else if (file.filename.includes('.md')) {
     const iframe = document.createElement("iframe");

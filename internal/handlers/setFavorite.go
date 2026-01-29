@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func (db *DBhdlr) SetFavorite(c *gin.Context) {
+func (app *App) SetFavorite(c *gin.Context) {
 
 	param1, err := strconv.Atoi(c.Param("id"))
 
@@ -27,7 +27,7 @@ func (db *DBhdlr) SetFavorite(c *gin.Context) {
 		return
 	}
 
-	db.Query.SetFavorite(c, database.SetFavoriteParams{
+	app.Db.SetFavorite(c, database.SetFavoriteParams{
 		Favorite: favorite,
 		ID:       id,
 	})

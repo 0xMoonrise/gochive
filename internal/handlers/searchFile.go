@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func (db *DBhdlr) SearchFiles(c *gin.Context) {
+func (app *App) SearchFiles(c *gin.Context) {
 
 	var pageSize int32
 
@@ -33,7 +33,7 @@ func (db *DBhdlr) SearchFiles(c *gin.Context) {
 
 	page := int32(p)
 
-	pageElements, _ := db.Query.GetCountSearch(c, s)
+	pageElements, _ := app.Db.GetCountSearch(c, s)
 	log.Print(pageElements)
 	pageLimit := math.Ceil(float64(pageElements) / float64(pageSize))
 
@@ -48,7 +48,7 @@ func (db *DBhdlr) SearchFiles(c *gin.Context) {
 		Offset:  (page - 1) * pageSize,
 	}
 
-	data, err := db.Query.SearchArchive(c, searchParam)
+	data, err := app.Db.SearchArchive(c, searchParam)
 
 	if err != nil {
 		slog.Error("cannot fetch the data from database")

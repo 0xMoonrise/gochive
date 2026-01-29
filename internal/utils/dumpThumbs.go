@@ -9,15 +9,14 @@ import (
 	"time"
 
 	"github.com/0xMoonrise/gochive/internal/config"
-	"github.com/0xMoonrise/gochive/internal/database"
 )
 
-func DumpThumbnails(db *database.Queries) {
+func DumpThumbnails(c *config.Conf) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
 
-	thumbnails, err := db.GetThumbnails(ctx)
+	thumbnails, err := c.Db.GetThumbnails(ctx)
 
 	if err != nil {
 		slog.Error("failed to fetch thumbnails", "err", err)

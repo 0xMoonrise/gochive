@@ -11,7 +11,7 @@ import (
 	"github.com/mrz1836/go-sanitize"
 )
 
-func (db *DBhdlr) SetEditFile(c *gin.Context) {
+func (app *App) SetEditFile(c *gin.Context) {
 
 	filename := c.PostForm("filename")
 	editorial := c.PostForm("editorial")
@@ -32,7 +32,7 @@ func (db *DBhdlr) SetEditFile(c *gin.Context) {
 	filename = sanitize.XSS(filename)
 	editorial = sanitize.XSS(editorial)
 
-	err = db.Query.SetEditFile(c, database.SetEditFileParams{
+	err = app.Db.SetEditFile(c, database.SetEditFileParams{
 		Filename:  filename,
 		Editorial: editorial,
 		ID:        int32(id),

@@ -14,7 +14,7 @@ import (
 	"github.com/mrz1836/go-sanitize"
 )
 
-func (db *DBhdlr) UploadFile(c *gin.Context) {
+func (app *App) UploadFile(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 
@@ -59,7 +59,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 		File:      rawData,
 	}
 
-	id, err := db.Query.InsertFile(c, insertFile)
+	id, err := app.Db.InsertFile(c, insertFile)
 
 	if err != nil {
 		log.Println(err)
@@ -76,7 +76,7 @@ func (db *DBhdlr) UploadFile(c *gin.Context) {
 			return
 		}
 
-		err = db.Query.SaveThumbnail(c, database.SaveThumbnailParams{
+		err = app.Db.SaveThumbnail(c, database.SaveThumbnailParams{
 			ID:             id,
 			ThumbnailImage: thumbnail,
 		})

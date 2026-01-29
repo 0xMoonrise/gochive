@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func (db *DBhdlr) GetFile(c *gin.Context) {
+func (app *App) GetFile(c *gin.Context) {
 
 	p := c.Param("id")
 	id, err := strconv.Atoi(p)
@@ -21,7 +21,7 @@ func (db *DBhdlr) GetFile(c *gin.Context) {
 		return
 	}
 
-	data, err := db.Query.GetArchive(c, int32(id))
+	data, err := app.Db.GetArchive(c, int32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"status": "Not found"})

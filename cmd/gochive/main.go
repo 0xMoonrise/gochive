@@ -5,9 +5,10 @@ import (
 	"net"
 	"os"
 
+	c "github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/server"
-	"github.com/0xMoonrise/gochive/internal/utils"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -18,7 +19,9 @@ func run() error {
 		slog.Info(".env not loaded")
 	}
 
+	conf := &c.Conf{}
 	db, err := connectDB()
+
 	if err != nil {
 		return err
 	}
@@ -34,9 +37,10 @@ func run() error {
 		return err
 	}
 
-	utils.DumpThumbnails(database)
+	conf.Db = database
+	conf.S3 = os.Getenv("S3_URL")
 
-	server := server.NewServer(database)
+	server := server.NewServer(conf)
 	addr := net.JoinHostPort(os.Getenv("HOST"), os.Getenv("PORT"))
 
 	if err := server.Run(addr); err != nil {
