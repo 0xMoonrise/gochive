@@ -6,9 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/0xMoonrise/gochive/internal/config"
+	"github.com/0xMoonrise/gochive/internal/app"
 	"github.com/0xMoonrise/gochive/internal/handlers"
-	"github.com/0xMoonrise/gochive/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,19 +30,13 @@ func InjectUserCSS() gin.HandlerFunc {
 	}
 }
 
-func NewServer(conf *config.Conf) *gin.Engine {
+func NewServer(app *app.App) *gin.Engine {
 
 	r := gin.Default()
 
 	// change this if you need to trust proxies
 	// see https://gin-gonic.com/es/docs/deployment/#dont-trust-all-proxies
 	r.SetTrustedProxies(nil)
-	app := &handlers.App{}
-
-	app.Db = conf.Db
-	app.S3 = conf.S3
-	app.S3Client = utils.NewS3Client()
-
 	r.LoadHTMLGlob("templates/*")
 
 	r.Use(InjectUserCSS())
@@ -56,14 +49,14 @@ func NewServer(conf *config.Conf) *gin.Engine {
 	r.GET("/", handlers.Root)
 	r.GET("/view", handlers.ViewFile)
 
-	r.GET("/:id", app.GetFile)
-	r.GET("images/:name", app.GetImage)
-	r.GET("/get_files/:page", app.GetFiles)
+	r.GET("/:id", handlers.GetFile(app))
+	r.GET("/images/:name", handlers.GetImage(app))
+	r.GET("/get_files/:page", handlers.GetFiles(app))
 
-	r.POST("/upload", app.UploadFile)
-	r.POST("/search/:page", app.SearchFiles)
-	r.POST("/set_favorite/:id", app.SetFavorite)
-	r.POST("/edit/:id", app.SetEditFile)
+	r.POST("/upload", handlers.UploadFile(app))
+	r.POST("/search/:page", handlers.SearchFiles(app))
+	r.POST("/set_favorite/:id", handlers.SetFavorite(app))
+	r.POST("/edit/:id", handlers.SetEditFile(app))
 
 	return r
 }

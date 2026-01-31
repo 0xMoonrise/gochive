@@ -10,13 +10,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xMoonrise/gochive/internal/app"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/pressly/goose/v3"
 )
 
 const MAX_RETRIES = 3
 
-func bootSchema(q *database.Queries) error {
+func schemas(q *database.Queries) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
@@ -32,7 +33,7 @@ func bootSchema(q *database.Queries) error {
 	return nil
 }
 
-func bootMigrations(db *sql.DB) error {
+func migrations(db *sql.DB) error {
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return err
@@ -94,4 +95,26 @@ func connectDB() (db *sql.DB, err error) {
 	slog.Info("Database connected successfully")
 
 	return db, nil
+}
+
+func bootDatabase(app *app.App) (func() error, error) {
+	db, err := connectDB()
+
+	if err != nil {
+		return nil, err
+	}
+
+	database := database.New(db)
+
+	if err := schemas(database); err != nil {
+		return nil, err
+	}
+
+	if err := migrations(db); err != nil {
+		return nil, err
+	}
+
+	app.Db = database
+
+	return db.Close, nil
 }

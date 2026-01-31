@@ -5,8 +5,7 @@ import (
 	"net"
 	"os"
 
-	c "github.com/0xMoonrise/gochive/internal/config"
-	"github.com/0xMoonrise/gochive/internal/database"
+	application "github.com/0xMoonrise/gochive/internal/app"
 	"github.com/0xMoonrise/gochive/internal/server"
 
 	"github.com/joho/godotenv"
@@ -19,31 +18,35 @@ func run() error {
 		slog.Info(".env not loaded")
 	}
 
-	conf := &c.Conf{}
-	db, err := connectDB()
-
+	app := &application.App{}
+	closeDB, err := bootDatabase(app)
 	if err != nil {
+		slog.Error("Something went wrong while trying booting the database",
+			"error",
+			err,
+		)
 		return err
 	}
 
-	defer db.Close()
-	database := database.New(db)
-
-	if err := bootSchema(database); err != nil {
+	app.S3Client, err = application.NewS3Client()
+	if err != nil {
+		slog.Error("Something went wrong while trying to create s3 client",
+			"error",
+			err,
+		)
 		return err
 	}
 
-	if err := bootMigrations(db); err != nil {
-		return err
-	}
+	defer closeDB()
 
-	conf.Db = database
-	conf.S3 = os.Getenv("S3_URL")
-
-	server := server.NewServer(conf)
+	server := server.NewServer(app)
 	addr := net.JoinHostPort(os.Getenv("HOST"), os.Getenv("PORT"))
 
 	if err := server.Run(addr); err != nil {
+		slog.Error("Something went wrong while trying to run the server",
+			"error",
+			err,
+		)
 		return err
 	}
 
