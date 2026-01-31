@@ -33,9 +33,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app/app .
 COPY --from=builder /usr/local/lib/libpdfium.so /usr/local/lib/
 
-COPY --from=builder /app/templates ./templates
-COPY --from=builder /app/static ./static
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY --from=builder /app/templates /app/static /app/db/migrations ./
 
 COPY --from=builder /opt/pdfjs/web /opt/pdfjs/web
 COPY --from=builder /opt/pdfjs/build /opt/pdfjs/build

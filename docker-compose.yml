@@ -14,7 +14,7 @@ services:
   gochive:
     build:
       context: .
-      dockerfile: Dockerfiles/Dockerfile.app
+      dockerfile: Dockerfile
     container_name: gochive_app
     ports:
       - "8080:8080"

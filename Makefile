@@ -28,4 +28,3 @@ test:
 
 db:
 	docker exec -it $(DOCKER_DB) psql -U $(DB_USER) -d $(DB_NAME)
-
