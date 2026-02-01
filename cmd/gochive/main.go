@@ -28,7 +28,7 @@ func run() error {
 		return err
 	}
 
-	app.S3Client, err = application.NewS3Client()
+	app.Storage, err = application.NewS3Client()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create s3 client",
 			"error",
@@ -41,7 +41,6 @@ func run() error {
 
 	server := server.NewServer(app)
 	addr := net.JoinHostPort(os.Getenv("HOST"), os.Getenv("PORT"))
-
 	if err := server.Run(addr); err != nil {
 		slog.Error("Something went wrong while trying to run the server",
 			"error",

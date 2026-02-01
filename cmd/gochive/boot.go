@@ -15,7 +15,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-const MAX_RETRIES = 3
+const maxRetries = 3
 
 func schemas(q *database.Queries) error {
 
@@ -65,7 +65,7 @@ func connectDB() (db *sql.DB, err error) {
 	u.RawQuery = q.Encode()
 
 	slog.Info("Initializing database connection")
-	for i := range MAX_RETRIES {
+	for i := range maxRetries {
 		db, err = sql.Open("postgres", u.String())
 		if err == nil {
 			err = db.Ping()
@@ -78,7 +78,7 @@ func connectDB() (db *sql.DB, err error) {
 		slog.Warn(
 			"Cannot connect to database, retrying",
 			"attempt", i,
-			"max", MAX_RETRIES,
+			"max", maxRetries,
 			"error", err,
 		)
 
@@ -86,7 +86,7 @@ func connectDB() (db *sql.DB, err error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("database unavailable after %d attempts: %w", MAX_RETRIES, err)
+		return nil, fmt.Errorf("database unavailable after %d attempts: %w", maxRetries, err)
 	}
 
 	db.SetMaxOpenConns(5)

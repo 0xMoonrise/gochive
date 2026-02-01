@@ -199,7 +199,7 @@ function createCardElement(file) {
   const card = document.createElement("a");
   card.className = "card";
   card.href = file.filename.includes('.pdf') ?
-    `web/viewer.html?file=/${file.id}` : `get_file/${file.id}`;
+    `web/viewer.html?file=/${file.id}` : `/${file.id}`;
 
   const title = document.createElement("div");
   title.className = "card-title";
@@ -213,7 +213,7 @@ function createCardElement(file) {
   } else if (file.filename.includes('.md')) {
     const iframe = document.createElement("iframe");
     iframe.className = "card-thumbnail";
-    iframe.src = `get_file/${file.id}`;
+    iframe.src = `/${file.id}`;
     iframe.scrolling = "no";
     card.appendChild(iframe);
   }

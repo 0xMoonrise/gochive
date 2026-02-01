@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -16,25 +17,35 @@ type Client struct {
 	S3Client *s3.Client
 }
 
-func (c Client) StreamFile(ctx context.Context,
-	bucketName string,
-	objectKey string,
-	w io.Writer,
-) error {
+func (c *Client) GetItem(ctx context.Context, name string) (
+	length int64,
+	contentType string,
+	reader io.ReadCloser,
+	err error,
+) {
+	objKey := path.Join("images", name)
+	bucket := os.Getenv("BUCKET")
 
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(objKey),
 	})
 
 	if err != nil {
-		return err
+		return
 	}
 
-	defer result.Body.Close()
+	length = int64(0)
+	if result.ContentLength != nil {
+		length = *result.ContentLength
+	}
 
-	_, err = io.Copy(w, result.Body)
-	return err
+	contentType = "application/octet-stream"
+	if result.ContentType != nil {
+		contentType = *result.ContentType
+	}
+
+	return
 }
 
 func NewS3Client() (*Client, error) {
