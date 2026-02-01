@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -16,22 +15,6 @@ import (
 )
 
 const maxRetries = 3
-
-func schemas(q *database.Queries) error {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
-
-	if err := q.CreateSchema(ctx); err != nil {
-		return err
-	}
-
-	if err := q.CreateArchiveTable(ctx); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func migrations(db *sql.DB) error {
 
@@ -104,12 +87,13 @@ func bootDatabase(app *app.App) (func() error, error) {
 		return nil, err
 	}
 
-	database := database.New(db)
-
-	if err := schemas(database); err != nil {
+	data, err := os.ReadFile("db/sql/schema.sql")
+	if err != nil {
 		return nil, err
 	}
 
+	db.Exec(string(data))
+	database := database.New(db)
 	if err := migrations(db); err != nil {
 		return nil, err
 	}

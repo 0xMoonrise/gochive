@@ -10,36 +10,8 @@ import (
 	"database/sql"
 )
 
-const createArchiveTable = `-- name: CreateArchiveTable :exec
-CREATE TABLE IF NOT EXISTS archive_schema.archive (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    filename TEXT NOT NULL,
-    editorial TEXT NOT NULL,
-    cover_page INTEGER NOT NULL DEFAULT 1,
-    file BYTEA NOT NULL,
-    favorite BOOLEAN NOT NULL DEFAULT FALSE,
-    thumbnail_image BYTEA,
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT check_cover_page_positive CHECK (cover_page >= 1)
-)
-`
-
-func (q *Queries) CreateArchiveTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createArchiveTable)
-	return err
-}
-
-const createSchema = `-- name: CreateSchema :exec
-CREATE SCHEMA IF NOT EXISTS archive_schema
-`
-
-func (q *Queries) CreateSchema(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createSchema)
-	return err
-}
-
 const getArchive = `-- name: GetArchive :one
-SELECT id, filename, editorial, cover_page, file, favorite, thumbnail_image, created_at, bookmark FROM archive_schema.archive WHERE id = $1 LIMIT 1
+SELECT id, filename, editorial, cover_page, favorite, created_at, bookmark, s3_key FROM archive_schema.archive WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error) {
@@ -50,13 +22,23 @@ func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchiv
 		&i.Filename,
 		&i.Editorial,
 		&i.CoverPage,
-		&i.File,
 		&i.Favorite,
-		&i.ThumbnailImage,
 		&i.CreatedAt,
 		&i.Bookmark,
+		&i.S3Key,
 	)
 	return i, err
+}
+
+const getArchiveById = `-- name: GetArchiveById :one
+SELECT filename FROM archive_schema.archive WHERE id=$1
+`
+
+func (q *Queries) GetArchiveById(ctx context.Context, id int32) (string, error) {
+	row := q.db.QueryRowContext(ctx, getArchiveById, id)
+	var filename string
+	err := row.Scan(&filename)
+	return filename, err
 }
 
 const getArchiveByName = `-- name: GetArchiveByName :one
@@ -149,79 +131,24 @@ func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (
 	return count, err
 }
 
-const getThumbnails = `-- name: GetThumbnails :many
-SELECT 
-	id, 
-	thumbnail_image 
-FROM archive_schema.archive
-ORDER BY id
-`
-
-type GetThumbnailsRow struct {
-	ID             int32  `json:"id"`
-	ThumbnailImage []byte `json:"thumbnail_image"`
-}
-
-func (q *Queries) GetThumbnails(ctx context.Context) ([]GetThumbnailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getThumbnails)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetThumbnailsRow
-	for rows.Next() {
-		var i GetThumbnailsRow
-		if err := rows.Scan(&i.ID, &i.ThumbnailImage); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const insertFile = `-- name: InsertFile :one
 INSERT INTO archive_schema.archive(
 	filename,
-	editorial,
-	file)
-VALUES($1, $2, $3)
+	editorial)
+VALUES($1, $2)
 RETURNING id
 `
 
 type InsertFileParams struct {
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
-	File      []byte `json:"file"`
 }
 
 func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, insertFile, arg.Filename, arg.Editorial, arg.File)
+	row := q.db.QueryRowContext(ctx, insertFile, arg.Filename, arg.Editorial)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
-}
-
-const saveThumbnail = `-- name: SaveThumbnail :exec
-UPDATE archive_schema.archive
-SET
-	thumbnail_image=$1
-WHERE id=$2
-`
-
-type SaveThumbnailParams struct {
-	ThumbnailImage []byte `json:"thumbnail_image"`
-	ID             int32  `json:"id"`
-}
-
-func (q *Queries) SaveThumbnail(ctx context.Context, arg SaveThumbnailParams) error {
-	_, err := q.db.ExecContext(ctx, saveThumbnail, arg.ThumbnailImage, arg.ID)
-	return err
 }
 
 const searchArchive = `-- name: SearchArchive :many

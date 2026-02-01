@@ -28,7 +28,7 @@ COPY --from=builder /usr/local/lib/libpdfium.so /usr/local/lib/
 
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY --from=builder /app/db/ ./db/
 
 COPY --from=builder /opt/pdfjs/web /opt/pdfjs/web
 COPY --from=builder /opt/pdfjs/build /opt/pdfjs/build

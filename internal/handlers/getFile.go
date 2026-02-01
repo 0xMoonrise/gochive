@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"html/template"
+	"io"
 	"log/slog"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -23,26 +25,32 @@ func GetFile(app *app.App) gin.HandlerFunc {
 			return
 		}
 
-		data, err := app.Db.GetArchive(c, int32(id))
+		filename, err := app.Db.GetArchiveById(c, int32(id))
 
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"status": "Not found"})
 			return
 		}
-		// Maybe support other kind of files?
-		if strings.Contains(data.Filename, "pdf") {
-			c.Data(http.StatusOK, "application/pdf", data.File)
+
+		objKey := path.Join("files", filename)
+		length, contentType, reader, err := app.Storage.GetItem(c.Request.Context(), objKey)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Not found",
+			})
 		}
 
-		if strings.Contains(data.Filename, "md") { // should I assume that I will never store anything else but md and pdf?
-
-			html := markdown.ToHTML(data.File, nil, nil)
+		defer reader.Close()
+		if strings.Contains(filename, "md") {
+			data, _ := io.ReadAll(reader)
+			html := markdown.ToHTML(data, nil, nil)
 
 			c.HTML(http.StatusOK, "view_md.html", gin.H{
 				"Content": template.HTML(html),
 			})
-
+			return
 		}
 
+		c.DataFromReader(http.StatusOK, length, contentType, reader, nil)
 	}
 }
