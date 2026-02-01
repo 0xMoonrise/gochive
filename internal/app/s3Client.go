@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"os"
-	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -17,13 +16,12 @@ type Client struct {
 	S3Client *s3.Client
 }
 
-func (c *Client) GetItem(ctx context.Context, name string) (
+func (c *Client) GetItem(ctx context.Context, objKey string) (
 	length int64,
 	contentType string,
 	reader io.ReadCloser,
 	err error,
 ) {
-	objKey := path.Join("images", name)
 	bucket := os.Getenv("BUCKET")
 
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
@@ -44,6 +42,7 @@ func (c *Client) GetItem(ctx context.Context, name string) (
 	if result.ContentType != nil {
 		contentType = *result.ContentType
 	}
+
 	reader = result.Body
 	return
 }

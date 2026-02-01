@@ -44,4 +44,8 @@ Libs: -L\${libdir} -lpdfium
 Cflags: -I\${includedir}
 EOF
 
-ldconfig
+PDF_VER="5.4.530"
+
+wget "https://github.com/mozilla/pdf.js/releases/download/v${PDF_VER}/pdfjs-${PDF_VER}-dist.zip" -P /opt/
+mkdir -p /opt/pdfjs
+unzip "/opt/pdfjs-${PDF_VER}-dist.zip" -d /opt/pdfjs/
