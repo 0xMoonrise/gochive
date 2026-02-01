@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"io"
 
 	"github.com/0xMoonrise/gochive/internal/database"
@@ -8,9 +9,9 @@ import (
 
 type App struct {
 	Db      *database.Queries
-	Storage *Client
+	Storage Store
 }
 
 type Store interface {
-	GetItem(name string) (length int64, contentType string, reader io.Reader)
+	GetItem(ctx context.Context, objKey string) (length int64, contentType string, reader io.ReadCloser, err error)
 }
