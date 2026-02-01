@@ -44,7 +44,7 @@ func (c *Client) GetItem(ctx context.Context, name string) (
 	if result.ContentType != nil {
 		contentType = *result.ContentType
 	}
-
+	reader = result.Body
 	return
 }
 
