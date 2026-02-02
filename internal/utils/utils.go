@@ -2,13 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"log"
-	"os"
-	"path/filepath"
+	"io"
 	"regexp"
 	"time"
 
-	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/chai2010/webp"
 	"github.com/klippa-app/go-pdfium"
 	"github.com/klippa-app/go-pdfium/requests"
@@ -18,21 +15,22 @@ import (
 var pool pdfium.Pool
 
 // var instance pdfium.Pdfium
-func renderPage(file []byte, page int, output string) ([]byte, error) {
-	var rawImage bytes.Buffer
+func MakeThumbnail(reader io.ReadSeeker, size int64, page int, imageBuffer *bytes.Buffer) (err error) {
+
 	pool = single_threaded.Init(single_threaded.Config{})
 	instance, err := pool.GetInstance(time.Second * 30)
 
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	doc, err := instance.OpenDocument(&requests.OpenDocument{
-		File: &file,
+		FileReader:     reader,
+		FileReaderSize: size,
 	})
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	defer instance.FPDF_CloseDocument(&requests.FPDF_CloseDocument{
@@ -50,36 +48,13 @@ func renderPage(file []byte, page int, output string) ([]byte, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return
 	}
-
-	err = webp.Encode(&rawImage, pageRender.Result.Image, &webp.Options{Quality: 100})
+	err = webp.Encode(imageBuffer, pageRender.Result.Image, &webp.Options{Quality: 100})
 	if err != nil {
-		return nil, err
+		return
 	}
-
-	f, err := os.Create(filepath.Join(config.THUMB_PATH, output))
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	_, err = f.Write(rawImage.Bytes())
-	if err != nil {
-		return nil, err
-	}
-
-	return rawImage.Bytes(), nil
-}
-
-func MakeThumbnail(rawFile []byte, filename string) ([]byte, error) {
-
-	rawImage, err := renderPage(rawFile, 0, filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return rawImage, nil
+	return
 }
 
 func ValidateFilename(filename string) bool {

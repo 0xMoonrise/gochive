@@ -13,7 +13,6 @@ func GetImage(app *app.App) gin.HandlerFunc {
 
 		param := c.Param("name")
 		objKey := path.Join("images", param)
-
 		length, contentType, reader, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})

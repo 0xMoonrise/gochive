@@ -23,7 +23,6 @@ func (c *Client) GetItem(ctx context.Context, objKey string) (
 	err error,
 ) {
 	bucket := os.Getenv("BUCKET")
-
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(objKey),
@@ -44,6 +43,25 @@ func (c *Client) GetItem(ctx context.Context, objKey string) (
 	}
 
 	reader = result.Body
+	return
+}
+
+func (c *Client) PutItem(
+	ctx context.Context,
+	objKey string,
+	length int64,
+	contentType string,
+	file io.ReadCloser) (
+	err error,
+) {
+	bucket := os.Getenv("BUCKET")
+	_, err = c.S3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(bucket),
+		Key:           aws.String(objKey),
+		Body:          file,
+		ContentLength: &length,
+		ContentType:   aws.String("application/octet-stream"),
+	})
 	return
 }
 

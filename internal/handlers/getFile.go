@@ -16,8 +16,8 @@ import (
 
 func GetFile(app *app.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		p := c.Param("id")
-		id, err := strconv.Atoi(p)
+		param := c.Param("id")
+		id, err := strconv.Atoi(param)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"}) // check status request

@@ -10,7 +10,8 @@ SELECT filename FROM archive_schema.archive WHERE id=$1;
 -- name: InsertFile :one
 INSERT INTO archive_schema.archive(
 	filename,
-	editorial)
+	editorial
+)
 VALUES($1, $2)
 RETURNING id;
 

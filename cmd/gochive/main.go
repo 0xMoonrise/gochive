@@ -30,7 +30,7 @@ func run() error {
 
 	app.Storage, err = application.NewS3Client()
 	if err != nil {
-		slog.Error("Something went wrong while trying to create s3 client",
+		slog.Error("Something went wrong while trying to create a storage client",
 			"error",
 			err,
 		)
