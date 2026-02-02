@@ -5,7 +5,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
 	"path"
 	"strconv"
 
@@ -81,17 +80,12 @@ func UploadFile(app *app.App) gin.HandlerFunc {
 			return
 		}
 
-		fileImage := utils.Must(os.CreateTemp("", "image-*"))
-		defer func() {
-			fileImage.Close()
-			os.Remove(fileImage.Name())
-		}()
+		imageBytes := image.Bytes()
+		imageReader := bytes.NewReader(imageBytes)
+		size := imageReader.Size()
 
-		n := utils.Must(fileImage.Write(image.Bytes()))
 		objKey := path.Join("images", strconv.Itoa(int(id)))
-
-		utils.Must(fileImage.Seek(0, 0))
-		err = app.Storage.PutItem(c.Request.Context(), objKey, int64(n), "application/octet-stream", fileImage)
+		err = app.Storage.PutItem(c.Request.Context(), objKey, size, "application/octet-stream", imageReader)
 
 		if err != nil {
 			slog.Error("Error while trying to upload a image to storage", "error", err)

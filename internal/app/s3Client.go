@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -51,7 +53,7 @@ func (c *Client) PutItem(
 	objKey string,
 	length int64,
 	contentType string,
-	file io.ReadCloser) (
+	file io.Reader) (
 	err error,
 ) {
 	bucket := os.Getenv("BUCKET")
@@ -85,7 +87,16 @@ func NewS3Client() (*Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithCredentialsProvider(creds),
 		config.WithRegion(region),
-	)
+		config.WithHTTPClient(&http.Client{
+			Transport: &http.Transport{
+				MaxIdleConns:          100,
+				MaxIdleConnsPerHost:   100,
+				IdleConnTimeout:       300 * time.Second,
+				TLSHandshakeTimeout:   5 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				DisableCompression:    true,
+			},
+		}))
 
 	if err != nil {
 		return nil, err
@@ -94,6 +105,7 @@ func NewS3Client() (*Client, error) {
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(endpoint)
 		o.UsePathStyle = true
+		o.EndpointOptions.DisableHTTPS = true
 	})
 
 	return &Client{

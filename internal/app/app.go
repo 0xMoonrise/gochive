@@ -14,5 +14,5 @@ type App struct {
 
 type Store interface {
 	GetItem(ctx context.Context, objKey string) (length int64, contentType string, reader io.ReadCloser, err error)
-	PutItem(ctx context.Context, objKey string, length int64, contentType string, reader io.ReadCloser) (err error)
+	PutItem(ctx context.Context, objKey string, length int64, contentType string, reader io.Reader) (err error)
 }
