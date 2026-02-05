@@ -10,13 +10,13 @@ import (
 )
 
 type Querier interface {
-	GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error)
-	GetArchiveById(ctx context.Context, id int32) (string, error)
-	GetArchiveByName(ctx context.Context) (string, error)
+	GetArchive(ctx context.Context, id int64) (Archive, error)
+	GetArchiveById(ctx context.Context, id int64) (string, error)
+	GetArchiveByName(ctx context.Context, filename string) (Archive, error)
 	GetArchivePage(ctx context.Context, arg GetArchivePageParams) ([]GetArchivePageRow, error)
 	GetCountArchive(ctx context.Context) (int64, error)
 	GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int64, error)
-	InsertFile(ctx context.Context, arg InsertFileParams) (int32, error)
+	InsertFile(ctx context.Context, arg InsertFileParams) (int64, error)
 	SearchArchive(ctx context.Context, arg SearchArchiveParams) ([]SearchArchiveRow, error)
 	SetEditFile(ctx context.Context, arg SetEditFileParams) error
 	SetFavorite(ctx context.Context, arg SetFavoriteParams) error

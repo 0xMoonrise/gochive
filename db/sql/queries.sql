@@ -1,65 +1,63 @@
 -- name: GetArchive :one
-SELECT * FROM archive_schema.archive WHERE id = $1 LIMIT 1;
+SELECT * FROM archive WHERE id = ? LIMIT 1;
 
 -- name: GetArchiveByName :one
-SELECT filename FROM archive_schema.archive WHERE filename=name;
+SELECT * FROM archive WHERE filename = ? LIMIT 1;
 
 -- name: GetArchiveById :one
-SELECT filename FROM archive_schema.archive WHERE id=$1;
+SELECT filename FROM archive WHERE id = ?;
 
 -- name: InsertFile :one
-INSERT INTO archive_schema.archive(
-	filename,
-	editorial
+INSERT INTO archive(
+  filename,
+  editorial
 )
-VALUES($1, $2)
+VALUES(?, ?)
 RETURNING id;
 
 -- name: GetArchivePage :many
-SELECT 
-	id, 
-	filename,
-	editorial,
-    favorite
-FROM archive_schema.archive 
+SELECT
+  id,
+  filename,
+  editorial,
+  favorite
+FROM archive
 ORDER BY favorite DESC, id
-LIMIT $1
-OFFSET $2; 
+LIMIT ?
+OFFSET ?;
 
 -- name: GetCountArchive :one
 SELECT
-	count(id)
-FROM archive_schema.archive;
+  count(id)
+FROM archive;
 
 -- name: SearchArchive :many
 SELECT
-    id,
-    filename,
-    editorial,
-    favorite
-FROM archive_schema.archive
-WHERE filename ILIKE '%' || $1 || '%'
+  id,
+  filename,
+  editorial,
+  favorite
+FROM archive
+WHERE filename LIKE '%' || ? || '%'
 ORDER BY favorite DESC, id
-LIMIT $2
-OFFSET $3;
+LIMIT ?
+OFFSET ?;
 
 -- name: GetCountSearch :one
 SELECT
-    count(id)
-FROM archive_schema.archive
-WHERE filename ILIKE '%' || $1 || '%';
+  count(id)
+FROM archive
+WHERE filename LIKE '%' || ? || '%';
 
 -- name: SetFavorite :exec
-UPDATE archive_schema.archive
-SET favorite=$1
-WHERE id = $2;
+UPDATE archive
+SET favorite = ?
+WHERE id = ?;
 
 -- name: SetEditFile :exec
-UPDATE 
-	archive_schema.archive
-SET 
-	filename=$1, 
-	editorial=$2
-WHERE id=$3;
-
-
+UPDATE
+  archive
+SET
+  filename = ?,
+  editorial = ?
+WHERE id = ?;

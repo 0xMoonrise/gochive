@@ -11,14 +11,15 @@ import (
 
 	"github.com/0xMoonrise/gochive/internal/app"
 	"github.com/0xMoonrise/gochive/internal/database"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 )
 
 const maxRetries = 3
 
-func migrations(db *sql.DB) error {
+func migrations(dialect string, db *sql.DB) error {
 
-	if err := goose.SetDialect("postgres"); err != nil {
+	if err := goose.SetDialect(dialect); err != nil {
 		return err
 	}
 
@@ -31,7 +32,7 @@ func migrations(db *sql.DB) error {
 	return nil
 }
 
-func connectDB() (db *sql.DB, err error) {
+func newPG() (db *sql.DB, err error) {
 
 	u := &url.URL{
 		Scheme: "postgresql",
@@ -80,23 +81,29 @@ func connectDB() (db *sql.DB, err error) {
 	return db, nil
 }
 
+func newSQLITE() (db *sql.DB, err error) {
+	db, err = sql.Open("sqlite3", "/opt/gochive/gochive.db")
+	return
+}
+
 func bootDatabase(app *app.App) (func() error, error) {
-	db, err := connectDB()
+	db, err := newSQLITE()
 
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := os.ReadFile("db/sql/schema.sql")
+	schema, err := os.ReadFile("db/sql/schema.sql")
 	if err != nil {
 		return nil, err
 	}
 
-	db.Exec(string(data))
+	db.Exec(string(schema))
 	database := database.New(db)
-	if err := migrations(db); err != nil {
-		return nil, err
-	}
+
+	// if err := migrations("sqlite", db); err != nil {
+	// 	return nil, err
+	// }
 
 	app.Db = database
 

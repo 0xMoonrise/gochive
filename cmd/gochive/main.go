@@ -7,9 +7,7 @@ import (
 
 	application "github.com/0xMoonrise/gochive/internal/app"
 	"github.com/0xMoonrise/gochive/internal/server"
-
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
 func run() error {
@@ -29,7 +27,7 @@ func run() error {
 	}
 
 	// app.Storage, err = application.NewS3Client()
-	app.Storage, err = application.NewfdClient()
+	app.Storage, err = application.NewfsClient()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
 			"error",

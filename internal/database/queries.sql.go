@@ -11,12 +11,12 @@ import (
 )
 
 const getArchive = `-- name: GetArchive :one
-SELECT id, filename, editorial, cover_page, favorite, created_at, bookmark, s3_key FROM archive_schema.archive WHERE id = $1 LIMIT 1
+SELECT id, filename, editorial, cover_page, favorite, created_at FROM archive WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchive, error) {
+func (q *Queries) GetArchive(ctx context.Context, id int64) (Archive, error) {
 	row := q.db.QueryRowContext(ctx, getArchive, id)
-	var i ArchiveSchemaArchive
+	var i Archive
 	err := row.Scan(
 		&i.ID,
 		&i.Filename,
@@ -24,17 +24,15 @@ func (q *Queries) GetArchive(ctx context.Context, id int32) (ArchiveSchemaArchiv
 		&i.CoverPage,
 		&i.Favorite,
 		&i.CreatedAt,
-		&i.Bookmark,
-		&i.S3Key,
 	)
 	return i, err
 }
 
 const getArchiveById = `-- name: GetArchiveById :one
-SELECT filename FROM archive_schema.archive WHERE id=$1
+SELECT filename FROM archive WHERE id = ?
 `
 
-func (q *Queries) GetArchiveById(ctx context.Context, id int32) (string, error) {
+func (q *Queries) GetArchiveById(ctx context.Context, id int64) (string, error) {
 	row := q.db.QueryRowContext(ctx, getArchiveById, id)
 	var filename string
 	err := row.Scan(&filename)
@@ -42,35 +40,42 @@ func (q *Queries) GetArchiveById(ctx context.Context, id int32) (string, error) 
 }
 
 const getArchiveByName = `-- name: GetArchiveByName :one
-SELECT filename FROM archive_schema.archive WHERE filename=name
+SELECT id, filename, editorial, cover_page, favorite, created_at FROM archive WHERE filename = ? LIMIT 1
 `
 
-func (q *Queries) GetArchiveByName(ctx context.Context) (string, error) {
-	row := q.db.QueryRowContext(ctx, getArchiveByName)
-	var filename string
-	err := row.Scan(&filename)
-	return filename, err
+func (q *Queries) GetArchiveByName(ctx context.Context, filename string) (Archive, error) {
+	row := q.db.QueryRowContext(ctx, getArchiveByName, filename)
+	var i Archive
+	err := row.Scan(
+		&i.ID,
+		&i.Filename,
+		&i.Editorial,
+		&i.CoverPage,
+		&i.Favorite,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getArchivePage = `-- name: GetArchivePage :many
-SELECT 
-	id, 
-	filename,
-	editorial,
-    favorite
-FROM archive_schema.archive 
+SELECT
+  id,
+  filename,
+  editorial,
+  favorite
+FROM archive
 ORDER BY favorite DESC, id
-LIMIT $1
-OFFSET $2
+LIMIT ?
+OFFSET ?
 `
 
 type GetArchivePageParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 type GetArchivePageRow struct {
-	ID        int32  `json:"id"`
+	ID        int64  `json:"id"`
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
 	Favorite  bool   `json:"favorite"`
@@ -106,8 +111,8 @@ func (q *Queries) GetArchivePage(ctx context.Context, arg GetArchivePageParams) 
 
 const getCountArchive = `-- name: GetCountArchive :one
 SELECT
-	count(id)
-FROM archive_schema.archive
+  count(id)
+FROM archive
 `
 
 func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
@@ -119,9 +124,9 @@ func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
 
 const getCountSearch = `-- name: GetCountSearch :one
 SELECT
-    count(id)
-FROM archive_schema.archive
-WHERE filename ILIKE '%' || $1 || '%'
+  count(id)
+FROM archive
+WHERE filename LIKE '%' || ? || '%'
 `
 
 func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int64, error) {
@@ -132,10 +137,11 @@ func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (
 }
 
 const insertFile = `-- name: InsertFile :one
-INSERT INTO archive_schema.archive(
-	filename,
-	editorial)
-VALUES($1, $2)
+INSERT INTO archive(
+  filename,
+  editorial
+)
+VALUES(?, ?)
 RETURNING id
 `
 
@@ -144,34 +150,34 @@ type InsertFileParams struct {
 	Editorial string `json:"editorial"`
 }
 
-func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int32, error) {
+func (q *Queries) InsertFile(ctx context.Context, arg InsertFileParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertFile, arg.Filename, arg.Editorial)
-	var id int32
+	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
 
 const searchArchive = `-- name: SearchArchive :many
 SELECT
-    id,
-    filename,
-    editorial,
-    favorite
-FROM archive_schema.archive
-WHERE filename ILIKE '%' || $1 || '%'
+  id,
+  filename,
+  editorial,
+  favorite
+FROM archive
+WHERE filename LIKE '%' || ? || '%'
 ORDER BY favorite DESC, id
-LIMIT $2
-OFFSET $3
+LIMIT ?
+OFFSET ?
 `
 
 type SearchArchiveParams struct {
 	Column1 sql.NullString `json:"column_1"`
-	Limit   int32          `json:"limit"`
-	Offset  int32          `json:"offset"`
+	Limit   int64          `json:"limit"`
+	Offset  int64          `json:"offset"`
 }
 
 type SearchArchiveRow struct {
-	ID        int32  `json:"id"`
+	ID        int64  `json:"id"`
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
 	Favorite  bool   `json:"favorite"`
@@ -206,18 +212,18 @@ func (q *Queries) SearchArchive(ctx context.Context, arg SearchArchiveParams) ([
 }
 
 const setEditFile = `-- name: SetEditFile :exec
-UPDATE 
-	archive_schema.archive
-SET 
-	filename=$1, 
-	editorial=$2
-WHERE id=$3
+UPDATE
+  archive
+SET
+  filename = ?,
+  editorial = ?
+WHERE id = ?
 `
 
 type SetEditFileParams struct {
 	Filename  string `json:"filename"`
 	Editorial string `json:"editorial"`
-	ID        int32  `json:"id"`
+	ID        int64  `json:"id"`
 }
 
 func (q *Queries) SetEditFile(ctx context.Context, arg SetEditFileParams) error {
@@ -226,14 +232,14 @@ func (q *Queries) SetEditFile(ctx context.Context, arg SetEditFileParams) error 
 }
 
 const setFavorite = `-- name: SetFavorite :exec
-UPDATE archive_schema.archive
-SET favorite=$1
-WHERE id = $2
+UPDATE archive
+SET favorite = ?
+WHERE id = ?
 `
 
 type SetFavoriteParams struct {
 	Favorite bool  `json:"favorite"`
-	ID       int32 `json:"id"`
+	ID       int64 `json:"id"`
 }
 
 func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) error {

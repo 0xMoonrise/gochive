@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const pageSize = 8
+
 func GetImage(app *app.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 

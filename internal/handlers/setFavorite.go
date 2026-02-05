@@ -12,15 +12,13 @@ import (
 
 func SetFavorite(app *app.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		param1, err := strconv.Atoi(c.Param("id"))
-
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			slog.Warn("Error trying to parse the page number")
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})
 			return
 		}
 
-		id := int32(param1)
 		favorite, err := strconv.ParseBool(c.PostForm("favorite"))
 
 		if err != nil {

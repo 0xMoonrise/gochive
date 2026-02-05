@@ -79,7 +79,7 @@ func (c *fsClient) PutItem(
 	return
 }
 
-func NewfdClient() (client *fsClient, err error) {
+func NewfsClient() (client *fsClient, err error) {
 
 	client = &fsClient{
 		Path: "/opt/gochive/",

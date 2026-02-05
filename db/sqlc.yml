@@ -1,7 +1,6 @@
-version: "2"
-
+version: 2
 sql:
-  - engine: "postgresql"
+  - engine: "sqlite"
     schema: "sql/schema.sql"
     queries: "sql/queries.sql"
     gen:

@@ -15,13 +15,9 @@ import (
 
 func SearchFiles(app *app.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var pageSize int32
 
 		search := c.PostForm("search")
-		pageSize = 8
-
-		p, err := strconv.Atoi(c.Param("page"))
-
+		page, err := strconv.ParseInt(c.Param("page"), 10, 64)
 		if err != nil {
 			slog.Error("cannot convert the page parameter on search file")
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong..."})
@@ -33,13 +29,11 @@ func SearchFiles(app *app.App) gin.HandlerFunc {
 			Valid:  true,
 		}
 
-		page := int32(p)
-
 		pageElements, _ := app.Db.GetCountSearch(c, s)
 		log.Print(pageElements)
 		pageLimit := math.Ceil(float64(pageElements) / float64(pageSize))
 
-		if (page <= 0) || (page > int32(pageLimit)) {
+		if (page <= 0) || (page > int64(pageLimit)) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
 			return
 		}

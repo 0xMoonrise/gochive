@@ -13,22 +13,24 @@ import (
 
 func GetFiles(app *app.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var pageSize int32
 
-		p, err := strconv.Atoi(c.Param("page")) // is this the right way?
-		page := int32(p)
+		page, err := strconv.ParseInt(c.Param("page"), 10, 64)
 
 		if err != nil {
-			slog.Warn("Error trying to parse the page number")
+			slog.Error("Error trying to parse the page number")
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})
+			return
 		}
 
-		pageSize = 8 // How many items will be display
+		pageElements, err := app.Db.GetCountArchive(c)
+		if err != nil {
+			slog.Error("Something went wrong while trying to fetch data from database", err)
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong... "})
+			return
+		}
+		pageLimit := int64(math.Ceil(float64(pageElements) / float64(pageSize)))
 
-		pageElements, _ := app.Db.GetCountArchive(c)
-		pageLimit := int32(math.Ceil(float64(pageElements) / float64(pageSize)))
-
-		if (page <= 0) || (page > int32(pageLimit)) {
+		if (page <= 0) || (page > pageLimit) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
 			return
 		}
@@ -39,10 +41,8 @@ func GetFiles(app *app.App) gin.HandlerFunc {
 		})
 
 		if err != nil {
-
 			slog.Error("Error fetching the data from database.")
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong..."})
-
 			return
 		}
 

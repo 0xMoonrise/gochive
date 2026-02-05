@@ -4,17 +4,11 @@
 
 package database
 
-import (
-	"time"
-)
-
-type ArchiveSchemaArchive struct {
-	ID        int32     `json:"id"`
-	Filename  string    `json:"filename"`
-	Editorial string    `json:"editorial"`
-	CoverPage int32     `json:"cover_page"`
-	Favorite  bool      `json:"favorite"`
-	CreatedAt time.Time `json:"created_at"`
-	Bookmark  float64   `json:"bookmark"`
-	S3Key     string    `json:"s3_key"`
+type Archive struct {
+	ID        int64  `json:"id"`
+	Filename  string `json:"filename"`
+	Editorial string `json:"editorial"`
+	CoverPage int64  `json:"cover_page"`
+	Favorite  bool   `json:"favorite"`
+	CreatedAt string `json:"created_at"`
 }
