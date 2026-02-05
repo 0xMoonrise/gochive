@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	application "github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/server"
 	"github.com/joho/godotenv"
 )
@@ -16,10 +16,10 @@ func run() error {
 		slog.Info(".env not loaded")
 	}
 
-	app := &application.App{}
+	app := &core.App{}
 
 	// app.Storage, err = application.NewS3Client()
-	client, err := application.NewfsClient()
+	client, err := core.NewfsClient()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
 			"error",

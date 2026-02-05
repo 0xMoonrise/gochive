@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/gin-gonic/gin"
 )
 
-func GetFiles(app *app.App) gin.HandlerFunc {
+func GetFiles(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		page, err := strconv.ParseInt(c.Param("page"), 10, 64)

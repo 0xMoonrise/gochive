@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +30,7 @@ func InjectUserCSS() gin.HandlerFunc {
 	}
 }
 
-func NewServer(app *app.App) *gin.Engine {
+func NewServer(app *core.App) *gin.Engine {
 
 	r := gin.Default()
 

@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/gin-gonic/gin"
 )
 
-func SetFavorite(app *app.App) gin.HandlerFunc {
+func SetFavorite(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {

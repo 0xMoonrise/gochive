@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
@@ -86,7 +86,7 @@ func newSQLITE() (db *sql.DB, err error) {
 	return
 }
 
-func bootDatabase(app *app.App) (func() error, error) {
+func bootDatabase(app *core.App) (func() error, error) {
 	db, err := newSQLITE()
 
 	if err != nil {

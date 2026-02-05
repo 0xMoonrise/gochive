@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/gin-gonic/gin"
 	"github.com/gomarkdown/markdown"
 )
 
-func GetFile(app *app.App) gin.HandlerFunc {
+func GetFile(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)

@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/gin-gonic/gin"
 )
 
 const pageSize = 8
 
-func GetImage(app *app.App) gin.HandlerFunc {
+func GetImage(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		param := c.Param("name")

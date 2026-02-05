@@ -8,13 +8,13 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/0xMoonrise/gochive/internal/app"
+	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
-func UploadFile(app *app.App) gin.HandlerFunc {
+func UploadFile(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		file, err := c.FormFile("file")
 
