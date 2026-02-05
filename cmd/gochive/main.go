@@ -28,7 +28,8 @@ func run() error {
 		return err
 	}
 
-	app.Storage, err = application.NewS3Client()
+	// app.Storage, err = application.NewS3Client()
+	app.Storage, err = application.NewfdClient()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
 			"error",
