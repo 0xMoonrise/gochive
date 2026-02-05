@@ -98,7 +98,10 @@ func bootDatabase(app *app.App) (func() error, error) {
 		return nil, err
 	}
 
-	db.Exec(string(schema))
+	if _, err = db.Exec(string(schema)); err != nil {
+		return nil, err
+	}
+
 	database := database.New(db)
 
 	// if err := migrations("sqlite", db); err != nil {

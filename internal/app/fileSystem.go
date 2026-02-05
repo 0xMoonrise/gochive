@@ -81,6 +81,11 @@ func (c *fsClient) PutItem(
 
 func NewfsClient() (client *fsClient, err error) {
 
+	dbDir := "/opt/gochive"
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return nil, err
+	}
+
 	client = &fsClient{
 		Path: "/opt/gochive/",
 	}

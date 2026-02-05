@@ -17,17 +17,9 @@ func run() error {
 	}
 
 	app := &application.App{}
-	closeDB, err := bootDatabase(app)
-	if err != nil {
-		slog.Error("Something went wrong while trying booting the database",
-			"error",
-			err,
-		)
-		return err
-	}
 
 	// app.Storage, err = application.NewS3Client()
-	app.Storage, err = application.NewfsClient()
+	client, err := application.NewfsClient()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
 			"error",
@@ -36,6 +28,15 @@ func run() error {
 		return err
 	}
 
+	app.Storage = client
+	closeDB, err := bootDatabase(app)
+	if err != nil {
+		slog.Error("Something went wrong while trying booting the database",
+			"error",
+			err,
+		)
+		return err
+	}
 	defer closeDB()
 
 	server := server.NewServer(app)
