@@ -7,6 +7,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/0xMoonrise/gochive/internal/utils"
 )
 
 type fsClient struct {
@@ -19,7 +21,6 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 ) {
 
 	pathTo := path.Join(c.Path, objKey)
-
 	file, err := os.OpenFile(pathTo, os.O_RDONLY, 0644)
 	if err != nil {
 		return
@@ -31,7 +32,9 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 		}
 	}()
 
-	info, _ := file.Stat()
+	obj = &Object{}
+	info := utils.Must(file.Stat())
+
 	obj.Length = info.Size()
 	buffer := make([]byte, 512)
 
