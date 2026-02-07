@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -44,9 +45,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		err = app.Storage.PutItem(
 			c.Request.Context(),
 			path.Join("files", file.Filename),
-			file.Size,
-			"application/octet-stream",
-			fileReader,
+			&core.Object{
+				Length:      file.Size,
+				ContentType: "application/octet-stream",
+				Reader:      fileReader,
+			},
 		)
 
 		if err != nil {
@@ -85,7 +88,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		size := imageReader.Size()
 
 		objKey := path.Join("images", strconv.Itoa(int(id)))
-		err = app.Storage.PutItem(c.Request.Context(), objKey, size, "application/octet-stream", imageReader)
+		err = app.Storage.PutItem(c.Request.Context(), objKey, &core.Object{
+			Length:      size,
+			ContentType: "application/octet-stream",
+			Reader:      io.NopCloser(imageReader),
+		})
 
 		if err != nil {
 			slog.Error("Error while trying to upload a image to storage", "error", err)

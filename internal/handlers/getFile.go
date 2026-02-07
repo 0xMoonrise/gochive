@@ -33,16 +33,16 @@ func GetFile(app *core.App) gin.HandlerFunc {
 		}
 
 		objKey := path.Join("files", filename)
-		length, contentType, reader, err := app.Storage.GetItem(c.Request.Context(), objKey)
+		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Not found",
 			})
 		}
 
-		defer reader.Close()
+		defer obj.Reader.Close()
 		if strings.Contains(filename, "md") {
-			data, _ := io.ReadAll(reader)
+			data, _ := io.ReadAll(obj.Reader)
 			html := markdown.ToHTML(data, nil, nil)
 
 			c.HTML(http.StatusOK, "view_md.html", gin.H{
@@ -51,6 +51,6 @@ func GetFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		c.DataFromReader(http.StatusOK, length, contentType, reader, nil)
+		c.DataFromReader(http.StatusOK, obj.Length, obj.ContentType, obj.Reader, nil)
 	}
 }

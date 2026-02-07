@@ -14,9 +14,7 @@ type fsClient struct {
 }
 
 func (c *fsClient) GetItem(ctx context.Context, objKey string) (
-	length int64,
-	contentType string,
-	reader io.ReadCloser,
+	obj *Object,
 	err error,
 ) {
 
@@ -34,7 +32,7 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 	}()
 
 	info, _ := file.Stat()
-	length = info.Size()
+	obj.Length = info.Size()
 	buffer := make([]byte, 512)
 
 	n, err := file.Read(buffer)
@@ -47,11 +45,11 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 		return
 	}
 
-	contentType = http.DetectContentType(buffer[:n])
-	if contentType == "" {
-		contentType = "application/octet-stream"
+	obj.ContentType = http.DetectContentType(buffer[:n])
+	if obj.ContentType == "" {
+		obj.ContentType = "application/octet-stream"
 	}
-	reader = file
+	obj.Reader = file
 
 	return
 }
@@ -59,9 +57,7 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 func (c *fsClient) PutItem(
 	ctx context.Context,
 	objKey string,
-	length int64,
-	contentType string,
-	file io.Reader,
+	obj *Object,
 ) (
 	// return
 	err error,
@@ -74,7 +70,7 @@ func (c *fsClient) PutItem(
 	}
 
 	defer f.Close()
-	_, err = io.Copy(f, file)
+	_, err = io.Copy(f, obj.Reader)
 
 	return
 }

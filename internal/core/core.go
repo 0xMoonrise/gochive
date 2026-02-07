@@ -12,7 +12,13 @@ type App struct {
 	Storage Store
 }
 
+type Object struct {
+	Length      int64
+	ContentType string
+	Reader      io.ReadCloser
+}
+
 type Store interface {
-	GetItem(ctx context.Context, objKey string) (length int64, contentType string, reader io.ReadCloser, err error)
-	PutItem(ctx context.Context, objKey string, length int64, contentType string, reader io.Reader) (err error)
+	GetItem(ctx context.Context, objKey string) (obj *Object, err error)
+	PutItem(ctx context.Context, objKey string, obj *Object) (err error)
 }

@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"time"
@@ -19,11 +18,10 @@ type Client struct {
 }
 
 func (c *Client) GetItem(ctx context.Context, objKey string) (
-	length int64,
-	contentType string,
-	reader io.ReadCloser,
+	obj *Object,
 	err error,
 ) {
+
 	bucket := os.Getenv("BUCKET")
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -34,35 +32,35 @@ func (c *Client) GetItem(ctx context.Context, objKey string) (
 		return
 	}
 
-	length = int64(0)
+	obj = &Object{}
+	obj.Length = int64(0)
 	if result.ContentLength != nil {
-		length = *result.ContentLength
+		obj.Length = *result.ContentLength
 	}
 
-	contentType = "application/octet-stream"
+	obj.ContentType = "application/octet-stream"
 	if result.ContentType != nil {
-		contentType = *result.ContentType
+		obj.ContentType = *result.ContentType
 	}
 
-	reader = result.Body
+	obj.Reader = result.Body
 	return
 }
 
 func (c *Client) PutItem(
 	ctx context.Context,
 	objKey string,
-	length int64,
-	contentType string,
-	file io.Reader) (
+	obj *Object,
+) (
 	err error,
 ) {
 	bucket := os.Getenv("BUCKET")
 	_, err = c.S3Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(bucket),
 		Key:           aws.String(objKey),
-		Body:          file,
-		ContentLength: &length,
-		ContentType:   aws.String("application/octet-stream"),
+		Body:          obj.Reader,
+		ContentLength: &obj.Length,
+		ContentType:   aws.String(obj.ContentType),
 	})
 	return
 }
