@@ -4,27 +4,16 @@ This is a personal project to store, back up, and centralize PDF documents, book
 
 config `.env`
 ```bash
-DB_USER=
-DB_PASS=
-DB_NAME=
-DB_HOST=
-DB_PORT=
-DB_URI="postgresql://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
+BK_DIR=
+RDIR=
 
-PORT=
-HOST=
+PORT=8080
+HOST=0.0.0.0
+```
 
-GOOSE_DRIVER=
-GOOSE_DBSTRING=
-GOOSE_MIGRATION_DIR=
-
-BACKUP_NAME=
-PATH_BACKUP=
-
+S3 client environment variables required (optional)
+```bash
 ACCESS_KEY=
 SECRET_KEY=
 S3_ENDPOINT=
-
-REGION=
-BUCKET=
 ```
