@@ -4,8 +4,8 @@ This is a personal project to store, back up, and centralize PDF documents, book
 
 config `.env`
 ```bash
-BK_DIR=
-RDIR=
+APP_BACKUP=
+APP_ROOT=
 
 PORT=8080
 HOST=0.0.0.0

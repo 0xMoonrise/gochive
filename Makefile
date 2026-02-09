@@ -1,6 +1,5 @@
 include .env
 
-DATE := $(shell date '+%Y-%m-%d')
 ENTRY=./cmd/gochive
 TARGET=gochive
 
@@ -16,11 +15,11 @@ clean:
 	rm $(TARGET)
 
 backup:
-	rsync -av --ignore-existing --stats "$(RDIR)/" "$(BK_DIR)/"
+	rsync -avu --stats "$(APP_ROOT)/" "$(BACKUP_ROOT)/"
 	@echo "Done."
 
 restore:
-	rsync -av --ignore-existing --stats "$(BK_DIR)/" "$(RDIR)/"
+	rsync -avu --ignore-existing --stats "$(BACKUP_ROOT)/" "$(APP_ROOT)/"
 	@echo "Done."
 
 test:
