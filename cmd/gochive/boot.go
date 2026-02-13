@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -81,14 +82,15 @@ func newPG() (db *sql.DB, err error) {
 	return db, nil
 }
 
-func newSQLITE() (db *sql.DB, err error) {
-	db, err = sql.Open("sqlite3", "/opt/gochive/gochive.db")
+func newSQLITE(p string) (db *sql.DB, err error) {
+	pathToDb := path.Join(p, "gochive.db")
+	db, err = sql.Open("sqlite3", pathToDb)
 	return
 }
 
 func bootDatabase(app *core.App) (func() error, error) {
-	db, err := newSQLITE()
 
+	db, err := newSQLITE(os.Getenv("APP_ROOT"))
 	if err != nil {
 		return nil, err
 	}

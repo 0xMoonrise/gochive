@@ -15,6 +15,7 @@ func GetImage(app *core.App) gin.HandlerFunc {
 
 		param := c.Param("name")
 		objKey := path.Join("images", param)
+
 		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})

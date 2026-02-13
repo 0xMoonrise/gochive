@@ -3,10 +3,10 @@ package handlers
 import (
 	"bytes"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/0xMoonrise/gochive/internal/core"
@@ -36,8 +36,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
+		// Just in case
+		file.Filename = filepath.Base(file.Filename)
 		fileReader, err := file.Open()
 		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
 			return
 		}
 
