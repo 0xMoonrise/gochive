@@ -61,3 +61,20 @@ SET
   filename = ?,
   editorial = ?
 WHERE id = ?;
+
+-- name: ArchiveExists :one
+SELECT
+  1
+FROM archive
+WHERE id = ?;
+
+-- name: GetAllFiles :many
+SELECT
+  id,
+  filename
+FROM archive;
+
+-- name: DeleteFile :exec
+DELETE
+FROM archive 
+WHERE id = ?;

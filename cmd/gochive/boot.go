@@ -2,14 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"log/slog"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	_ "github.com/mattn/go-sqlite3"
@@ -25,72 +22,17 @@ func migrations(dialect string, db *sql.DB) error {
 	}
 
 	cwd, _ := os.Getwd()
-
-	if err := goose.Up(db, filepath.Join(cwd, "db", "migrations")); err != nil {
+	path := filepath.Join(cwd, "db", "migrations")
+	if err := goose.Up(db, path); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func newPG() (db *sql.DB, err error) {
-
-	u := &url.URL{
-		Scheme: "postgresql",
-		User: url.UserPassword(
-			os.Getenv("DB_USER"),
-			os.Getenv("DB_PASS"),
-		),
-		Host: os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT"),
-		Path: os.Getenv("DB_NAME"),
-	}
-
-	q := u.Query()
-	q.Set("sslmode", "disable")
-	u.RawQuery = q.Encode()
-
-	slog.Info("Initializing database connection")
-	for i := range maxRetries {
-		db, err = sql.Open("postgres", u.String())
-		if err == nil {
-			err = db.Ping()
-		}
-
-		if err == nil {
-			break
-		}
-
-		slog.Warn(
-			"Cannot connect to database, retrying",
-			"attempt", i,
-			"max", maxRetries,
-			"error", err,
-		)
-
-		time.Sleep(2 * time.Second)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("database unavailable after %d attempts: %w", maxRetries, err)
-	}
-
-	db.SetMaxOpenConns(5)
-	db.SetMaxIdleConns(2)
-
-	slog.Info("Database connected successfully")
-
-	return db, nil
-}
-
-func newSQLITE(p string) (db *sql.DB, err error) {
-	pathToDb := path.Join(p, "gochive.db")
-	db, err = sql.Open("sqlite3", pathToDb)
-	return
-}
-
 func bootDatabase(app *core.App) (func() error, error) {
 
-	db, err := newSQLITE(os.Getenv("APP_ROOT"))
+	db, err := sql.Open("sqlite3", path.Join(config.ROOT, "gochive.db"))
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +46,7 @@ func bootDatabase(app *core.App) (func() error, error) {
 		return nil, err
 	}
 
-	database := database.New(db)
-
-	// if err := migrations("sqlite", db); err != nil {
-	// 	return nil, err
-	// }
-
-	app.Db = database
+	app.Db = database.New(db)
 
 	return db.Close, nil
 }

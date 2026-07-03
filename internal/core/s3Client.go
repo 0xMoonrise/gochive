@@ -1,90 +1,77 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
-	"os"
 	"time"
 
+	cfg "github.com/0xMoonrise/gochive/internal/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type Client struct {
+type clientS3 struct {
 	S3Client *s3.Client
 }
 
-func (c *Client) GetItem(ctx context.Context, objKey string) (
-	obj *Object,
-	err error,
-) {
-
-	bucket := os.Getenv("BUCKET")
+func (c *clientS3) GetItem(ctx context.Context, objKey string) (obj *Object, err error) {
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(cfg.BUCKET),
 		Key:    aws.String(objKey),
 	})
-
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	obj = &Object{}
+	obj = &Object{Reader: result.Body}
 	obj.Length = int64(0)
 	if result.ContentLength != nil {
 		obj.Length = *result.ContentLength
 	}
-
 	obj.ContentType = "application/octet-stream"
 	if result.ContentType != nil {
 		obj.ContentType = *result.ContentType
 	}
-
-	obj.Reader = result.Body
-	return
+	return obj, nil
 }
 
-func (c *Client) PutItem(
-	ctx context.Context,
-	objKey string,
-	obj *Object,
-) (
-	err error,
-) {
-	bucket := os.Getenv("BUCKET")
+func (c *clientS3) PutItem(ctx context.Context, objKey string, obj *Object) (err error) {
+	data, err := io.ReadAll(obj.Reader)
+	if err != nil {
+		return err
+	}
 	_, err = c.S3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:        aws.String(bucket),
+		Bucket:        aws.String(cfg.BUCKET),
 		Key:           aws.String(objKey),
-		Body:          obj.Reader,
+		Body:          bytes.NewReader(data),
 		ContentLength: &obj.Length,
 		ContentType:   aws.String(obj.ContentType),
 	})
 	return
 }
 
-func NewS3Client() (*Client, error) {
+func (c *clientS3) DelItem(ctx context.Context, objKey string) (err error) {
+	_, err = c.S3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(cfg.BUCKET),
+		Key:    aws.String(objKey),
+	})
+	return
+}
 
-	accessKey := os.Getenv("ACCESS_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
-	endpoint := os.Getenv("S3_ENDPOINT")
-	region := os.Getenv("REGION")
+func NewS3Client() (*clientS3, error) {
 
-	if endpoint == "" {
-		endpoint = "http://localhost:3901"
+	if cfg.ACCESS_KEY == "" || cfg.SECRET_KEY == "" {
+		return nil, errors.New("no credentials were provided")
 	}
-
-	if accessKey == "" || secretKey == "" {
-		return nil, errors.New("No credentials were provided")
-	}
-
-	creds := credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")
-
-	cfg, err := config.LoadDefaultConfig(context.Background(),
+	creds := credentials.NewStaticCredentialsProvider(cfg.ACCESS_KEY, cfg.SECRET_KEY, "")
+	conf, err := config.LoadDefaultConfig(context.Background(),
 		config.WithCredentialsProvider(creds),
-		config.WithRegion(region),
+		config.WithRegion(cfg.REGION),
 		config.WithHTTPClient(&http.Client{
 			Transport: &http.Transport{
 				MaxIdleConns:          100,
@@ -100,13 +87,13 @@ func NewS3Client() (*Client, error) {
 		return nil, err
 	}
 
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+	client := s3.NewFromConfig(conf, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(cfg.S3_ENDPOINT)
 		o.UsePathStyle = true
 		o.EndpointOptions.DisableHTTPS = true
 	})
 
-	return &Client{
+	return &clientS3{
 		S3Client: client,
 	}, nil
 }

@@ -1,28 +1,23 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net"
-	"os"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/server"
-	"github.com/joho/godotenv"
 )
 
 func run() error {
 
-	if err := godotenv.Load(); err != nil {
-		slog.Info(".env not loaded")
-	}
-
 	app := &core.App{}
-
-	// app.Storage, err = application.NewS3Client()
-	client, err := core.NewfsClient()
+	log.Println(config.MODE)
+	client, err := setMode(config.MODE)
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
-			"error",
+			"store client",
 			err,
 		)
 		return err
@@ -37,10 +32,13 @@ func run() error {
 		)
 		return err
 	}
-	defer closeDB()
 
+	defer closeDB()
+	if err := cli(app); err != nil {
+		return nil
+	}
 	server := server.NewServer(app)
-	addr := net.JoinHostPort(os.Getenv("HOST"), os.Getenv("PORT"))
+	addr := net.JoinHostPort(config.HOST, config.PORT)
 	if err := server.Run(addr); err != nil {
 		slog.Error("Something went wrong while trying to run the server",
 			"error",
@@ -54,10 +52,7 @@ func run() error {
 }
 
 func main() {
-
 	if err := run(); err != nil {
-		slog.Error("fatal:", "error", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
-
 }

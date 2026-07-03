@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MD Viewer</title>
+  <title>{{ .title }}</title>
   <link rel="shortcut icon" href="/static/favicon.ico" />
   <link rel="stylesheet" href="/static/styles/view_md.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.css" />
-
 <script>
   window.MathJax = {
     tex: {
@@ -24,20 +23,40 @@
 </head>
 <body class="dark-mode">
   <div class="container">
-    <div class="markdown-body">
-      {{ .Content }}
+    <div class="markdown-body" data-file-id="{{ .id }}">
+      <p>Cargando...</p>
     </div>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-  <script type="module" src="/static/js/view_md.js"></script>
   <script src="/static/js/copy.js"></script>
+  <script type="module">
+    import { Marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 
-  <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      if (window.MathJax && MathJax.typesetPromise) {
-        await MathJax.typesetPromise([document.querySelector('.markdown-body')]);
+      const container = document.querySelector(".markdown-body");
+      const id = container.dataset.fileId;
+
+      try {
+        const res = await fetch(`/file/${id}`);
+        if (!res.ok) {
+          container.innerHTML = `<p>File not found (${res.status}).</p>`;
+          return;
+        }
+
+        const rawMarkdown = await res.text();
+        const marked = new Marked();
+        container.innerHTML = marked.parse(rawMarkdown);
+
+        document.querySelectorAll("pre code").forEach((block) => {
+          hljs.highlightElement(block);
+        });
+
+        if (window.MathJax && MathJax.typesetPromise) {
+          await MathJax.typesetPromise([container]);
+        }
+      } catch (err) {
+        container.innerHTML = `<p>Error while trying to load the file.</p>`;
+        console.error(err);
       }
     });
   </script>

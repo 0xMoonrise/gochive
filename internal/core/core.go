@@ -21,4 +21,5 @@ type Object struct {
 type Store interface {
 	GetItem(ctx context.Context, objKey string) (obj *Object, err error)
 	PutItem(ctx context.Context, objKey string, obj *Object) (err error)
+	DelItem(ctx context.Context, objKey string) (err error)
 }

@@ -17,8 +17,7 @@ func SetEditFile(app *core.App) gin.HandlerFunc {
 		filename := c.PostForm("filename")
 		editorial := c.PostForm("editorial")
 
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			slog.Error("cannot convert the page parameter on search file")
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})

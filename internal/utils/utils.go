@@ -24,6 +24,7 @@ func MakeThumbnail(reader io.ReadSeeker, size int64, page int, imageBuffer *byte
 		return
 	}
 
+	defer instance.Close()
 	doc, err := instance.OpenDocument(&requests.OpenDocument{
 		FileReader:     reader,
 		FileReaderSize: size,

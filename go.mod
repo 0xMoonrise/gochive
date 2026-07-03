@@ -9,7 +9,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.0
 	github.com/chai2010/webp v1.4.0
 	github.com/gin-gonic/gin v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
 	github.com/joho/godotenv v1.5.1
 	github.com/klippa-app/go-pdfium v1.17.2
 	github.com/mattn/go-sqlite3 v1.14.33

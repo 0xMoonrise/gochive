@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/utils"
 )
 
@@ -38,13 +39,8 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 	obj.Length = info.Size()
 	buffer := make([]byte, 512)
 
-	n, err := file.Read(buffer)
+	n, err := file.ReadAt(buffer, 0)
 	if err != nil && err != io.EOF {
-		return
-	}
-
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
 		return
 	}
 
@@ -52,6 +48,7 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (
 	if obj.ContentType == "" {
 		obj.ContentType = "application/octet-stream"
 	}
+
 	obj.Reader = file
 
 	return
@@ -62,7 +59,6 @@ func (c *fsClient) PutItem(
 	objKey string,
 	obj *Object,
 ) (
-	// return
 	err error,
 ) {
 	pathTo := path.Join(c.Path, objKey)
@@ -78,15 +74,26 @@ func (c *fsClient) PutItem(
 	return
 }
 
+func (c *fsClient) DelItem(
+	ctx context.Context,
+	objKey string,
+) (err error) {
+
+	pathTo := path.Join(c.Path, objKey)
+	if err = os.Remove(pathTo); err != nil {
+		return
+	}
+	return nil
+}
+
 func NewfsClient() (client *fsClient, err error) {
 
-	root := os.Getenv("APP_ROOT")
-	if err := os.MkdirAll(root, 0755); err != nil {
+	if err := os.MkdirAll(config.ROOT, 0755); err != nil {
 		return nil, err
 	}
 
 	client = &fsClient{
-		Path: root,
+		Path: config.ROOT,
 	}
 
 	dirs := []string{"images", "files"}

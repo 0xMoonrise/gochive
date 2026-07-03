@@ -12,7 +12,7 @@ import (
 
 func SetFavorite(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			slog.Warn("Error trying to parse the page number")
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})

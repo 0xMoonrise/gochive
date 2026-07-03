@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
@@ -21,7 +22,6 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 
 		if err != nil {
 			slog.Error("something went wrong while uploading the a file")
-			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
 			return
 		}
@@ -39,27 +39,9 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		// Just in case
 		file.Filename = filepath.Base(file.Filename)
 		fileReader, err := file.Open()
+		defer fileReader.Close()
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
-			return
-		}
-
-		defer fileReader.Close()
-		err = app.Storage.PutItem(
-			c.Request.Context(),
-			path.Join("files", file.Filename),
-			&core.Object{
-				Length:      file.Size,
-				ContentType: "application/octet-stream",
-				Reader:      fileReader,
-			},
-		)
-
-		if err != nil {
-			slog.Error("Error while trying to upload a file to storage", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Uploaded unsuccessful",
-			})
 			return
 		}
 
@@ -71,7 +53,39 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		if err != nil {
 			slog.Error("Error while trying to store metada file into the database", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Uploaded unsuccessful",
+				"status": "Uploaded unsuccessful",
+			})
+			return
+		}
+
+		err = app.Storage.PutItem(
+			c.Request.Context(),
+			path.Join("files", strconv.Itoa(id)),
+			&core.Object{
+				Length:      file.Size,
+				ContentType: "application/octet-stream",
+				Reader:      fileReader,
+			},
+		)
+
+		if err != nil {
+			slog.Error("Error while trying to upload a file to storage", "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "Uploaded unsuccessful",
+			})
+			app.Db.DeleteFile(c, id)
+			return
+		}
+
+		if strings.HasSuffix(file.Filename, ".md") {
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"file": gin.H{
+					"id":        id,
+					"filename":  file.Filename,
+					"editorial": "Default",
+					"favorite":  false,
+				},
 			})
 			return
 		}
@@ -81,7 +95,7 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		if err != nil {
 			slog.Error("Error while trying to generate the thumbnail", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Uploaded unsuccessful",
+				"status": "Uploaded unsuccessful",
 			})
 			return
 		}
@@ -100,11 +114,19 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		if err != nil {
 			slog.Error("Error while trying to upload a image to storage", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Uploaded unsuccessful",
+				"status": "Uploaded unsuccessful",
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"status": "Uploaded successful"})
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"file": gin.H{
+				"id":        id,
+				"filename":  file.Filename,
+				"editorial": "Default",
+				"favorite":  false,
+			},
+		})
 	}
 }

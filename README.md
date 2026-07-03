@@ -4,15 +4,13 @@ This is a personal project to store, back up, and centralize PDF documents, book
 
 config `.env`
 ```bash
-APP_BACKUP=
-APP_ROOT=
-
-PORT=8080
 HOST=0.0.0.0
+MODE=1
 ```
 
 S3 client environment variables required (optional)
 ```bash
+BUCKET=
 ACCESS_KEY=
 SECRET_KEY=
 S3_ENDPOINT=
