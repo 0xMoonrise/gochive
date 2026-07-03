@@ -147,7 +147,7 @@ function createEditButton(file) {
 
       try {
         const response = await fetch(`/edit/${file.id}`, {
-          method: "POST",
+          method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
             filename: formData.get("filename") || '',
