@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"log"
 	"log/slog"
 	"math"
 	"net/http"
