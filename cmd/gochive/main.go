@@ -13,7 +13,6 @@ import (
 func run() error {
 
 	app := &core.App{}
-	log.Println(config.MODE)
 	client, err := setMode(config.MODE)
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",

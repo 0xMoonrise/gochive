@@ -30,9 +30,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 		}
 
 		pageElements, _ := app.Db.GetCountSearch(c, s)
-		log.Print(pageElements)
 		pageLimit := math.Ceil(float64(pageElements) / float64(pageSize))
-
 		if (page <= 0) || (page > int64(pageLimit)) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
 			return
