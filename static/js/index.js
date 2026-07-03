@@ -170,11 +170,85 @@ function createEditButton(file) {
   return buttonEdit;
 }
 
+function createConfirmModal(message) {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.style.display = "block";
+
+  const modalContent = document.createElement("div");
+  modalContent.className = "modal-content";
+
+  const text = document.createElement("p");
+  text.className = "confirm-text";
+  text.textContent = message;
+
+  const actions = document.createElement("div");
+  actions.className = "confirm-actions";
+
+  const yesButton = document.createElement("button");
+  yesButton.className = "confirm-button confirm-yes";
+  yesButton.textContent = "YES";
+
+  const noButton = document.createElement("button");
+  noButton.className = "confirm-button confirm-no";
+  noButton.textContent = "NO";
+
+  actions.appendChild(yesButton);
+  actions.appendChild(noButton);
+  modalContent.appendChild(text);
+  modalContent.appendChild(actions);
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  noButton.addEventListener("click", () => modal.remove());
+  window.addEventListener("click", (event) => {
+    if (event.target === modal) modal.remove();
+  });
+
+  return { modal, yesButton };
+}
+
+function createDeleteButton(file) {
+  const buttonDelete = document.createElement("button");
+  buttonDelete.className = "card-button-delete";
+  buttonDelete.title = 'Delete';
+  buttonDelete.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </svg>
+  `;
+
+  buttonDelete.addEventListener("click", async (event) => {
+    event.stopPropagation();
+
+    const { modal, yesButton } = createConfirmModal(`Are you sure to delete: ${file.filename} ?`);
+
+    yesButton.addEventListener("click", async () => {
+      try {
+        const response = await fetch(`/file/${file.id}`, { method: "DELETE" });
+        if (response.ok) {
+          loadFiles(currentPage(), currentQuery());
+        } else {
+          console.error("Error al eliminar el archivo");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        modal.remove();
+      }
+    });
+  });
+
+  return buttonDelete;
+}
+
 function createCardElement(file) {
   const cardContainer = document.createElement("div");
   const buttonContainer = document.createElement("div");
+  const buttonContainerRight = document.createElement("div");
   cardContainer.className = "card-container";
   buttonContainer.className = "button-container";
+  buttonContainerRight.className = "button-container-right";
 
   const card = document.createElement("a");
   card.className = "card";
@@ -200,7 +274,9 @@ function createCardElement(file) {
   card.appendChild(title);
   buttonContainer.appendChild(createFavoriteButton(file));
   buttonContainer.appendChild(createEditButton(file));
+  buttonContainerRight.appendChild(createDeleteButton(file));
   cardContainer.appendChild(buttonContainer);
+  cardContainer.appendChild(buttonContainerRight);
   cardContainer.appendChild(card);
 
   dom.cardList().appendChild(cardContainer);

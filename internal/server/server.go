@@ -74,5 +74,6 @@ func NewServer(app *core.App) *gin.Engine {
 	r.POST("/set_favorite/:id", handlers.SetFavorite(app))
 	r.POST("/edit/:id", handlers.SetEditFile(app))
 
+	r.DELETE("/file/:id", handlers.DeleteFile(app))
 	return r
 }
