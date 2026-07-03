@@ -58,6 +58,7 @@ func NewServer(app *core.App) *gin.Engine {
 	r.Use(injectConentCss())
 
 	r.Static("/static", "./static")
+	r.Static("/lib", "/opt/gochive/lib")
 	r.StaticFile("/favicon.ico", "static/favicon.ico")
 	r.StaticFS("/build", http.Dir("/opt/gochive/lib/pdfjs/build/"))
 	r.StaticFS("/web", http.Dir("/opt/gochive/lib/pdfjs/web/"))

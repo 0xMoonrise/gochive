@@ -6,50 +6,75 @@
   <title>{{ .title }}</title>
   <link rel="shortcut icon" href="/static/favicon.ico" />
   <link rel="stylesheet" href="/static/styles/view_md.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.css" />
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      processEscapes: true
-    },
-    svg: {
-      fontCache: 'global'
-    }
-  };
-</script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <link rel="stylesheet" href="/lib/highlightjs/styles/atom-one-dark.min.css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [
+          ['$', '$'],
+          ['\\(', '\\)']
+        ],
+        displayMath: [
+          ['$$', '$$'],
+          ['\\[', '\\]']
+        ],
+        processEscapes: true
+      },
+      options: {
+        menuOptions: {
+          settings: {
+            assistiveMml: false
+          }
+        }
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script async src="/lib/mathjax/tex-svg.js"></script>
 </head>
 <body class="dark-mode">
   <div class="container">
     <div class="markdown-body" data-file-id="{{ .id }}">
-      <p>Cargando...</p>
+      <p>Loading...</p>
     </div>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="/static/js/copy.js"></script>
+  <script src="/lib/highlightjs/highlight.min.js"></script>
   <script type="module">
     import { Marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+    import mermaid from "/lib/mermaid/mermaid.esm.min.mjs";
+    import { addCopyButtons } from "/static/js/copy.js";
+
+    hljs.registerAliases("mermaid", { languageName: "plaintext" });
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose'
+    });
 
     document.addEventListener("DOMContentLoaded", async () => {
       const container = document.querySelector(".markdown-body");
       const id = container.dataset.fileId;
-
       try {
         const res = await fetch(`/file/${id}`);
         if (!res.ok) {
           container.innerHTML = `<p>File not found (${res.status}).</p>`;
           return;
         }
-
         const rawMarkdown = await res.text();
         const marked = new Marked();
         container.innerHTML = marked.parse(rawMarkdown);
 
-        document.querySelectorAll("pre code").forEach((block) => {
+        container.querySelectorAll("pre code:not(.language-mermaid)").forEach((block) => {
           hljs.highlightElement(block);
         });
+
+        await mermaid.run({
+          querySelector: ".language-mermaid",
+        });
+
+        addCopyButtons(container);
 
         if (window.MathJax && MathJax.typesetPromise) {
           await MathJax.typesetPromise([container]);
