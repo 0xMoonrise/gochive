@@ -30,7 +30,15 @@ func DeleteFile(app *core.App) gin.HandlerFunc {
 
 		objKey := path.Join("files", idParam)
 		if err := app.Storage.DelItem(c, objKey); err != nil {
-			slog.Error("Something went wrong while trying to delete from storage",
+			slog.Error("Something went wrong while trying to delete file from storage",
+				"error", err)
+			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			return
+		}
+
+		objKey = path.Join("images", idParam)
+		if err := app.Storage.DelItem(c, objKey); err != nil {
+			slog.Error("Something went wrong while trying to delete image from storage",
 				"error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 			return
