@@ -28,7 +28,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 			Valid:  true,
 		}
 
-		pageElements, _ := app.Db.GetCountSearch(c, s)
+		pageElements, _ := app.DB.Queries.GetCountSearch(c, s)
 		pageLimit := math.Ceil(float64(pageElements) / float64(pageSize))
 		if (page <= 0) || (page > int64(pageLimit)) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
@@ -41,7 +41,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 			Offset:  (page - 1) * pageSize,
 		}
 
-		data, err := app.Db.SearchArchive(c, searchParam)
+		data, err := app.DB.Queries.SearchArchive(c, searchParam)
 
 		if err != nil {
 			slog.Error("cannot fetch the data from database")

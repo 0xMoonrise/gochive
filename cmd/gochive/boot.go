@@ -46,7 +46,9 @@ func bootDatabase(app *core.App) (func() error, error) {
 		return nil, err
 	}
 
-	app.Db = database.New(db)
-
+	app.DB = core.Database{
+		DB:      db,
+		Queries: database.New(db),
+	}
 	return db.Close, nil
 }

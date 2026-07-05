@@ -27,7 +27,7 @@ func SetFavorite(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		app.Db.SetFavorite(c, database.SetFavoriteParams{
+		app.DB.Queries.SetFavorite(c, database.SetFavoriteParams{
 			Favorite: favorite,
 			ID:       id,
 		})

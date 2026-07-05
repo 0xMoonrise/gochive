@@ -61,7 +61,7 @@ func View(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		filename, err := app.Db.GetArchiveById(c, id)
+		filename, err := app.DB.Queries.GetArchiveById(c, id)
 		if err != nil {
 			c.String(http.StatusNotFound, "not found")
 			return

@@ -20,7 +20,7 @@ func GetFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		if _, err := app.Db.GetArchiveById(c, id); err != nil {
+		if _, err := app.DB.Queries.GetArchiveById(c, id); err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"status": "Not found"})
 			return
 		}

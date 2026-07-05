@@ -21,7 +21,7 @@ func DeleteFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		if err := app.Db.DeleteFile(c, id); err != nil {
+		if err := app.DB.Queries.DeleteFile(c, id); err != nil {
 			slog.Error("Something went wrong while trying to delete a file",
 				"error", err)
 			c.JSON(http.StatusNotModified, gin.H{"status": "something went wrong..."})

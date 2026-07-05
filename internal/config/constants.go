@@ -1,7 +1,7 @@
 package config
 
 const THUMB_PATH string = "static/thumbnails/"
-const ROOT string = "/opt/gochive/"
+const ROOT string = "/opt/gochive-test/"
 const LOCAL string = "127.0.0.1"
 
 const FILESYSTEM = 1

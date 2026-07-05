@@ -19,9 +19,8 @@ import (
 func UploadFile(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		file, err := c.FormFile("file")
-
 		if err != nil {
-			slog.Error("something went wrong while uploading the a file")
+			slog.Error("something went wrong while uploading the a file", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
 			return
 		}
@@ -39,13 +38,21 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		// Just in case
 		file.Filename = filepath.Base(file.Filename)
 		fileReader, err := file.Open()
-		defer fileReader.Close()
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
 			return
 		}
+		defer fileReader.Close()
 
-		id, err := app.Db.InsertFile(c, database.InsertFileParams{
+		tx, err := app.DB.Begin()
+		if err != nil {
+			slog.Error("failed to begin transaction", "error", err)
+			return
+		}
+
+		defer tx.Rollback()
+		qtx := app.DB.Queries.WithTx(tx)
+		id, err := qtx.InsertFile(c, database.InsertFileParams{
 			Filename:  file.Filename,
 			Editorial: "Default",
 		})
@@ -73,7 +80,6 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})
-			app.Db.DeleteFile(c, id)
 			return
 		}
 
@@ -128,5 +134,7 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 				"favorite":  false,
 			},
 		})
+
+		tx.Commit()
 	}
 }

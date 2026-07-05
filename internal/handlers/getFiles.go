@@ -22,7 +22,7 @@ func GetFiles(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		pageElements, err := app.Db.GetCountArchive(c)
+		pageElements, err := app.DB.Queries.GetCountArchive(c)
 		if err != nil {
 			slog.Error("Something went wrong while trying to fetch data from database", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong... "})
@@ -35,7 +35,7 @@ func GetFiles(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		pageDb, err := app.Db.GetArchivePage(c, database.GetArchivePageParams{
+		pageDb, err := app.DB.Queries.GetArchivePage(c, database.GetArchivePageParams{
 			Limit:  pageSize,
 			Offset: (page - 1) * pageSize,
 		})

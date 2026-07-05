@@ -2,13 +2,19 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"io"
 
 	"github.com/0xMoonrise/gochive/internal/database"
 )
 
+type Database struct {
+	*sql.DB
+	*database.Queries
+}
+
 type App struct {
-	Db      *database.Queries
+	DB      Database
 	Storage Store
 }
 

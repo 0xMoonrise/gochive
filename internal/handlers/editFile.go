@@ -32,7 +32,7 @@ func SetEditFile(app *core.App) gin.HandlerFunc {
 		filename = sanitize.XSS(filename)
 		editorial = sanitize.XSS(editorial)
 
-		err = app.Db.SetEditFile(c, database.SetEditFileParams{
+		err = app.DB.Queries.SetEditFile(c, database.SetEditFileParams{
 			Filename:  filename,
 			Editorial: editorial,
 			ID:        id,

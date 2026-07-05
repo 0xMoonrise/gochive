@@ -36,7 +36,7 @@ func cli(app *core.App) error {
 }
 
 func runNormalize(app *core.App) {
-	rows, err := app.Db.GetAllFiles(context.Background())
+	rows, err := app.DB.Queries.GetAllFiles(context.Background())
 	if err != nil {
 		log.Fatal("Something went wrong while trying to connect to db")
 	}
