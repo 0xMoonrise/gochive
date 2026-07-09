@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"path"
 
@@ -8,17 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const pageSize = 8
-
 func GetImage(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		param := c.Param("name")
-		objKey := path.Join("images", param)
-
+		paramName := c.Param("name")
+		objKey := path.Join("images", paramName)
 		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			slog.Warn("Image not found", "error", err)
+			c.JSON(http.StatusNotFound, gin.H{"status": "not found"})
 			return
 		}
 

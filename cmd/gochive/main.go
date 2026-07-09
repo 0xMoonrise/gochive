@@ -12,8 +12,19 @@ import (
 
 func run() error {
 
-	app := &core.App{}
-	client, err := setMode(config.MODE)
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		slog.Error("Something went wrong while loading the config",
+			"store client",
+			err,
+		)
+		return err
+	}
+
+	app := &core.App{
+		Config: cfg,
+	}
+	client, err := app.SetMode()
 	if err != nil {
 		slog.Error("Something went wrong while trying to create a storage client",
 			"store client",
@@ -23,24 +34,22 @@ func run() error {
 	}
 
 	app.Storage = client
-	closeDB, err := bootDatabase(app)
+	closeDB, err := core.BootDatabase(app)
 	if err != nil {
 		slog.Error("Something went wrong while trying booting the database",
-			"error",
+			"database error",
 			err,
 		)
 		return err
 	}
 
 	defer closeDB()
-	if err := cli(app); err != nil {
-		return nil
-	}
+
 	server := server.NewServer(app)
-	addr := net.JoinHostPort(config.HOST, config.PORT)
+	addr := net.JoinHostPort(app.Config.Host, app.Config.Port)
 	if err := server.Run(addr); err != nil {
 		slog.Error("Something went wrong while trying to run the server",
-			"error",
+			"server error",
 			err,
 		)
 		return err

@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -57,13 +58,15 @@ func View(app *core.App) gin.HandlerFunc {
 		ParamId := c.Param("id")
 		id, err := strconv.Atoi(ParamId)
 		if err != nil {
-			c.String(http.StatusBadRequest, "bad id")
+			slog.Error("Cannot convert id on view", "error", err)
+			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
 
 		filename, err := app.DB.Queries.GetArchiveById(c, id)
 		if err != nil {
-			c.String(http.StatusNotFound, "not found")
+			slog.Error("id not found on view", "error", err)
+			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
 
@@ -77,13 +80,15 @@ func View(app *core.App) gin.HandlerFunc {
 
 		vendor, err := loadVendorViewer()
 		if err != nil {
-			c.String(http.StatusInternalServerError, "viewer unavailable")
+			slog.Error("Load vendor failed on view", "error", err)
+			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
 
 		inject, err := renderHeadInject(filename, "/file/"+ParamId)
 		if err != nil {
-			c.String(http.StatusInternalServerError, "viewer unavailable")
+			slog.Error("Cannot inject content on view", "error", err)
+			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
 

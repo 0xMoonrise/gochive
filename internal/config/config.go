@@ -8,68 +8,51 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var MODE int
-
-var (
-	// http server
-	PORT,
-	HOST,
-	// db config
-	DB_USER,
-	DB_PASS,
-	DB_HOST,
-	DB_NAME,
-	DB_PORT,
-	// S3 client
-	BUCKET,
-	ACCESS_KEY,
-	SECRET_KEY,
-	S3_ENDPOINT,
-	REGION string
-)
-
-func mustGetEnv(arg string) string {
-	v := os.Getenv(arg)
-	if v == "" {
-		slog.Error("missing required env var", "name", arg)
-		os.Exit(1)
-	}
-	return v
+type Config struct {
+	Mode   Mode
+	Host   string
+	Port   string
+	DBRoot string
+	FS     FSClientConfig
+	S3     S3ClientConfig
 }
 
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
+type S3ClientConfig struct {
+	Bucket     string
+	AccessKey  string
+	SecretKey  string
+	S3Endpoint string
+	Region     string
 }
 
-func init() {
+type FSClientConfig struct {
+	Root string
+}
 
-	var err error
-	if err = godotenv.Load(); err != nil {
-		slog.Info(".env not loaded")
+func LoadConfig() (*Config, error) {
+	if err := godotenv.Load(); err != nil {
+		slog.Warn("no .env file found, relying on real env vars")
 	}
 
-	MODE, err = strconv.Atoi(os.Getenv("MODE"))
+	m, err := strconv.Atoi(os.Getenv("MODE"))
 	if err != nil {
-		slog.Error("Cannot be possible to conver Mode to string")
-		os.Exit(1)
+		return nil, err
 	}
 
-	PORT = getEnv("PORT", "8080")
-	HOST = getEnv("HOST", LOCAL)
-
-	DB_HOST = getEnv("DB_HOST", LOCAL)
-	DB_NAME = getEnv("DB_NAME", "gochive")
-	DB_PORT = getEnv("DB_PORT", "5432")
-
-	if MODE == S3 {
-		BUCKET = mustGetEnv("BUCKET")
-		ACCESS_KEY = mustGetEnv("ACCESS_KEY")
-		SECRET_KEY = mustGetEnv("SECRET_KEY")
-
-		REGION = getEnv("REGION", "us-east-1")
-		S3_ENDPOINT = getEnv("S3_ENDPOINT", LOCAL)
-	}
+	return &Config{
+		Mode:   Mode(m),
+		Host:   os.Getenv("HOST"),
+		Port:   os.Getenv("PORT"),
+		DBRoot: os.Getenv("DB_ROOT"),
+		FS: FSClientConfig{
+			Root: os.Getenv("ROOT"),
+		},
+		S3: S3ClientConfig{
+			Bucket:     os.Getenv("BUCKET"),
+			AccessKey:  os.Getenv("ACCESS_KEY"),
+			SecretKey:  os.Getenv("SECRET_KEY"),
+			S3Endpoint: os.Getenv("S3_ENDPOINT"),
+			Region:     os.Getenv("REGION"),
+		},
+	}, nil
 }

@@ -1,10 +1,8 @@
 package core
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"time"
 
@@ -12,16 +10,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 type clientS3 struct {
 	S3Client *s3.Client
+	manager  *transfermanager.Client
+	conf     *cfg.S3ClientConfig
 }
 
 func (c *clientS3) GetItem(ctx context.Context, objKey string) (obj *Object, err error) {
 	result, err := c.S3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(cfg.BUCKET),
+		Bucket: aws.String(c.conf.Bucket),
 		Key:    aws.String(objKey),
 	})
 	if err != nil {
@@ -33,45 +34,48 @@ func (c *clientS3) GetItem(ctx context.Context, objKey string) (obj *Object, err
 	if result.ContentLength != nil {
 		obj.Length = *result.ContentLength
 	}
+
 	obj.ContentType = "application/octet-stream"
 	if result.ContentType != nil {
 		obj.ContentType = *result.ContentType
 	}
-	return obj, nil
+
+	return
 }
 
 func (c *clientS3) PutItem(ctx context.Context, objKey string, obj *Object) (err error) {
-	data, err := io.ReadAll(obj.Reader)
-	if err != nil {
-		return err
-	}
-	_, err = c.S3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:        aws.String(cfg.BUCKET),
-		Key:           aws.String(objKey),
-		Body:          bytes.NewReader(data),
-		ContentLength: &obj.Length,
-		ContentType:   aws.String(obj.ContentType),
+	_, err = c.manager.UploadObject(ctx, &transfermanager.UploadObjectInput{
+		Bucket:      aws.String(c.conf.Bucket),
+		Key:         aws.String(objKey),
+		Body:        obj.Reader,
+		ContentType: aws.String(obj.ContentType),
 	})
 	return
 }
 
 func (c *clientS3) DelItem(ctx context.Context, objKey string) (err error) {
 	_, err = c.S3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(cfg.BUCKET),
+		Bucket: aws.String(c.conf.Bucket),
 		Key:    aws.String(objKey),
 	})
 	return
 }
 
-func NewS3Client() (*clientS3, error) {
+func (app App) NewS3Client() (*clientS3, error) {
 
-	if cfg.ACCESS_KEY == "" || cfg.SECRET_KEY == "" {
+	if app.Config.S3.AccessKey == "" || app.Config.S3.SecretKey == "" {
 		return nil, errors.New("no credentials were provided")
 	}
-	creds := credentials.NewStaticCredentialsProvider(cfg.ACCESS_KEY, cfg.SECRET_KEY, "")
+
+	creds := credentials.NewStaticCredentialsProvider(
+		app.Config.S3.AccessKey,
+		app.Config.S3.SecretKey,
+		"",
+	)
+
 	conf, err := config.LoadDefaultConfig(context.Background(),
 		config.WithCredentialsProvider(creds),
-		config.WithRegion(cfg.REGION),
+		config.WithRegion(app.Config.S3.Region),
 		config.WithHTTPClient(&http.Client{
 			Transport: &http.Transport{
 				MaxIdleConns:          100,
@@ -88,12 +92,30 @@ func NewS3Client() (*clientS3, error) {
 	}
 
 	client := s3.NewFromConfig(conf, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(cfg.S3_ENDPOINT)
+		o.BaseEndpoint = aws.String(app.Config.S3.S3Endpoint)
 		o.UsePathStyle = true
 		o.EndpointOptions.DisableHTTPS = true
+		o.DisableLogOutputChecksumValidationSkipped = true
+	})
+
+	_, err = client.HeadBucket(
+		context.Background(),
+		&s3.HeadBucketInput{
+			Bucket: &app.Config.S3.Bucket,
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	manager := transfermanager.New(client, func(o *transfermanager.Options) {
+		o.PartSizeBytes = 64 * 1024 * 1024
+		o.Concurrency = 3
 	})
 
 	return &clientS3{
 		S3Client: client,
+		manager:  manager,
+		conf:     &app.Config.S3,
 	}, nil
 }

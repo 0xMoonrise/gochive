@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 )
@@ -73,7 +72,7 @@ func normalizeFile(app *core.App, file database.GetAllFilesRow) error {
 	defer f.Reader.Close()
 
 	id := strconv.Itoa(file.ID)
-	if err := writeFromReader(f.Reader, path.Join(config.ROOT, "files", id)); err != nil {
+	if err := writeFromReader(f.Reader, path.Join(app.Config.FS.Root, "files", id)); err != nil {
 		return fmt.Errorf("write from reader: %w", err)
 	}
 

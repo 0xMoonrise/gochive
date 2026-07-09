@@ -17,8 +17,8 @@ type Querier interface {
 	GetArchiveById(ctx context.Context, id int) (string, error)
 	GetArchiveByName(ctx context.Context, filename string) (Archive, error)
 	GetArchivePage(ctx context.Context, arg GetArchivePageParams) ([]GetArchivePageRow, error)
-	GetCountArchive(ctx context.Context) (int64, error)
-	GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int64, error)
+	GetCountArchive(ctx context.Context) (int, error)
+	GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int, error)
 	InsertFile(ctx context.Context, arg InsertFileParams) (int, error)
 	SearchArchive(ctx context.Context, arg SearchArchiveParams) ([]SearchArchiveRow, error)
 	SetEditFile(ctx context.Context, arg SetEditFileParams) error

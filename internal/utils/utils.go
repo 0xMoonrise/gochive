@@ -15,7 +15,12 @@ import (
 var pool pdfium.Pool
 
 // var instance pdfium.Pdfium
-func MakeThumbnail(reader io.ReadSeeker, size int64, page int, imageBuffer *bytes.Buffer) (err error) {
+func MakeThumbnail(
+	reader io.ReadSeeker,
+	size int64,
+	page int,
+	imageBuffer *bytes.Buffer,
+) (err error) {
 
 	pool = single_threaded.Init(single_threaded.Config{})
 	instance, err := pool.GetInstance(time.Second * 30)

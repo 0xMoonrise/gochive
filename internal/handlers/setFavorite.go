@@ -23,14 +23,15 @@ func SetFavorite(app *core.App) gin.HandlerFunc {
 
 		if err != nil {
 			slog.Warn("Error trying to parse the favorite bool")
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong..."})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 			return
 		}
 
-		app.DB.Queries.SetFavorite(c, database.SetFavoriteParams{
-			Favorite: favorite,
-			ID:       id,
-		})
+		app.DB.Queries.SetFavorite(c,
+			database.SetFavoriteParams{
+				Favorite: favorite,
+				ID:       id,
+			})
 
 		c.JSON(http.StatusOK, gin.H{"status": "Favorite Updated"})
 	}

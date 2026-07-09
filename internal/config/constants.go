@@ -1,10 +1,16 @@
 package config
 
-const THUMB_PATH string = "static/thumbnails/"
-const ROOT string = "/opt/gochive-test/"
-const LOCAL string = "127.0.0.1"
+type Mode int
 
-const FILESYSTEM = 1
-const S3 = 2
+const THUMB_PATH string = "static/thumbnails/"
+const LOCAL string = "127.0.0.1"
+const PAGE_SIZE int = 8
+
+const MAX_UPLOAD_SIZE = 60 << 20
+
+const (
+	FS Mode = iota + 1
+	S3
+)
 
 const VIEWER_PATH = "/opt/gochive/lib/pdfjs/web/viewer.html"

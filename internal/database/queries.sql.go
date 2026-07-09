@@ -130,8 +130,8 @@ OFFSET ?
 `
 
 type GetArchivePageParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 type GetArchivePageRow struct {
@@ -175,9 +175,9 @@ SELECT
 FROM archive
 `
 
-func (q *Queries) GetCountArchive(ctx context.Context) (int64, error) {
+func (q *Queries) GetCountArchive(ctx context.Context) (int, error) {
 	row := q.db.QueryRowContext(ctx, getCountArchive)
-	var count int64
+	var count int
 	err := row.Scan(&count)
 	return count, err
 }
@@ -189,9 +189,9 @@ FROM archive
 WHERE filename LIKE '%' || ? || '%'
 `
 
-func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int64, error) {
+func (q *Queries) GetCountSearch(ctx context.Context, dollar_1 sql.NullString) (int, error) {
 	row := q.db.QueryRowContext(ctx, getCountSearch, dollar_1)
-	var count int64
+	var count int
 	err := row.Scan(&count)
 	return count, err
 }
@@ -232,8 +232,8 @@ OFFSET ?
 
 type SearchArchiveParams struct {
 	Column1 sql.NullString `json:"column_1"`
-	Limit   int64          `json:"limit"`
-	Offset  int64          `json:"offset"`
+	Limit   int            `json:"limit"`
+	Offset  int            `json:"offset"`
 }
 
 type SearchArchiveRow struct {

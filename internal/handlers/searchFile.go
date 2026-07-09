@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 		page, err := strconv.ParseInt(c.Param("page"), 10, 64)
 		if err != nil {
 			slog.Error("cannot convert the page parameter on search file")
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wrong..."})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 			return
 		}
 
@@ -29,7 +30,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 		}
 
 		pageElements, _ := app.DB.Queries.GetCountSearch(c, s)
-		pageLimit := math.Ceil(float64(pageElements) / float64(pageSize))
+		pageLimit := math.Ceil(float64(pageElements) / float64(config.PAGE_SIZE))
 		if (page <= 0) || (page > int64(pageLimit)) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
 			return
@@ -37,15 +38,15 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 
 		searchParam := database.SearchArchiveParams{
 			Column1: s,
-			Limit:   pageSize,
-			Offset:  (page - 1) * pageSize,
+			Limit:   config.PAGE_SIZE,
+			Offset:  int(page-1) * config.PAGE_SIZE,
 		}
 
 		data, err := app.DB.Queries.SearchArchive(c, searchParam)
 
 		if err != nil {
 			slog.Error("cannot fetch the data from database")
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "something went wront..."})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wront..."})
 			return
 		}
 

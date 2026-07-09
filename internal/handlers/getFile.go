@@ -12,11 +12,12 @@ import (
 
 func GetFile(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		ParamId := c.Param("id")
 		id, err := strconv.Atoi(ParamId)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"}) // check status request
 			slog.Warn("The id param cannot convert to int")
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"}) // check status requet
 			return
 		}
 
@@ -29,7 +30,7 @@ func GetFile(app *core.App) gin.HandlerFunc {
 		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Not found",
+				"status": "Not found",
 			})
 			return
 		}

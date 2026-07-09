@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"io"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/database"
 )
 
@@ -16,6 +17,7 @@ type Database struct {
 type App struct {
 	DB      Database
 	Storage Store
+	Config  *config.Config
 }
 
 type Object struct {

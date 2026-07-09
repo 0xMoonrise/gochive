@@ -52,10 +52,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 
 		defer tx.Rollback()
 		qtx := app.DB.Queries.WithTx(tx)
-		id, err := qtx.InsertFile(c, database.InsertFileParams{
-			Filename:  file.Filename,
-			Editorial: "Default",
-		})
+		id, err := qtx.InsertFile(c,
+			database.InsertFileParams{
+				Filename:  file.Filename,
+				Editorial: "Default",
+			})
 
 		if err != nil {
 			slog.Error("Error while trying to store metada file into the database", "error", err)
