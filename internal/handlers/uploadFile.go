@@ -94,6 +94,7 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 					"favorite":  false,
 				},
 			})
+			tx.Commit()
 			return
 		}
 

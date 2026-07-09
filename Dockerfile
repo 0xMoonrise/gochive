@@ -24,9 +24,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app/app ./
 COPY --from=builder /usr/local/lib/libpdfium.so /usr/local/lib/
 
-COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
-COPY --from=builder /app/db/ ./db/
 
 COPY --from=builder /opt/gochive/lib/pdfjs/web /opt/gochive/lib/pdfjs/web
 COPY --from=builder /opt/gochive/lib/pdfjs/build /opt/gochive/lib/pdfjs/build
