@@ -31,7 +31,8 @@ type FSClientConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	if err := godotenv.Load(); err != nil {
+
+	if err := godotenv.Load("/opt/gochive/.env"); err != nil {
 		slog.Warn("no .env file found, relying on real env vars")
 	}
 
