@@ -1,0 +1,174 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"net/url"
+	"path"
+	"strconv"
+	"time"
+
+	"github.com/0xMoonrise/gochive/internal/config"
+	"github.com/0xMoonrise/gochive/internal/core"
+	"github.com/0xMoonrise/gochive/internal/database"
+	"github.com/0xMoonrise/gochive/internal/utils"
+	"github.com/spf13/cobra"
+)
+
+func newUploadArchive(app *core.App) *cobra.Command {
+	return &cobra.Command{
+		Use:   "upload_archive <url>",
+		Short: "Upload an archive from a URL",
+		Long:  "Downloads an archive from the specified URL and uploads it to the archive.",
+		Example: `gochive upload_archive https://example.com/archive.pdf
+gochive upload_archive https://example.com/archive.md`,
+		Args:                  cobra.ExactArgs(1),
+		DisableFlagsInUseLine: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			url, err := isValidURL(args[0])
+
+			if err != nil {
+				return err
+			}
+
+			return downloadFile(url, app)
+		},
+	}
+}
+
+func isValidURL(rawURL string) (*url.URL, error) {
+	u, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, errors.New("scheme not supported")
+	}
+
+	if u.Host == "" {
+		return nil, errors.New("url has no host")
+	}
+
+	if !utils.ValidateFilename(path.Ext(u.Path)) {
+		return nil, errors.New("extension not allowed")
+	}
+
+	return u, nil
+}
+
+type progressReader struct {
+	reader     io.Reader
+	total      int64
+	read       int64
+	lastReport int
+}
+
+func (pr *progressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	pr.read += int64(n)
+
+	if pr.total > 0 {
+		percent := int(float64(pr.read) / float64(pr.total) * 100)
+		if percent != pr.lastReport {
+			fmt.Printf("\rDownload progress: %d%%", percent)
+			pr.lastReport = percent
+		}
+	}
+
+	return n, err
+}
+
+func downloadFile(url *url.URL, app *core.App) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return errors.New("an error has occurred: " + res.Status)
+	}
+
+	pr := &progressReader{reader: res.Body, total: res.ContentLength}
+
+	limitedReader := io.LimitReader(pr, config.MAX_UPLOAD_SIZE+1)
+	file, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return err
+	}
+	fmt.Println()
+	if len(file) > config.MAX_UPLOAD_SIZE {
+		return errors.New("file exceeds maximum allowed size of 60MB")
+	}
+
+	tx, err := app.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	filename := path.Base(url.Path)
+	slog.Info("Download success", "filename", filename)
+
+	qtx := app.DB.Queries.WithTx(tx)
+	id, err := qtx.InsertFile(ctx, database.InsertFileParams{
+		Filename:  filename,
+		Editorial: "Default",
+	})
+	if err != nil {
+		return err
+	}
+
+	key := strconv.Itoa(id)
+	objKey := path.Join("files", key)
+	obj := &core.Object{
+		Length:      int64(len(file)),
+		ContentType: res.Header.Get("Content-Type"),
+		Reader:      io.NopCloser(bytes.NewReader(file)),
+	}
+
+	if err := app.Storage.PutItem(ctx, objKey, obj); err != nil {
+		return err
+	}
+
+	if path.Ext(filename) == ".md" {
+		slog.Info("A Markdown file does not require a thumbnail to be generated.")
+		slog.Info("File successfully uploaded", "id", key)
+		return tx.Commit()
+	}
+
+	image := &bytes.Buffer{}
+	if err := utils.MakeThumbnail(bytes.NewReader(file), int64(len(file)), 0, image); err != nil {
+		return err
+	}
+
+	imageBytes := image.Bytes()
+	objKey = path.Join("images", key)
+	obj = &core.Object{
+		Length:      int64(len(imageBytes)),
+		ContentType: http.DetectContentType(imageBytes[:512]),
+		Reader:      io.NopCloser(bytes.NewReader(imageBytes)),
+	}
+
+	if err := app.Storage.PutItem(ctx, objKey, obj); err != nil {
+		return err
+	}
+
+	slog.Info("File successfully uploaded", "id", key)
+	return tx.Commit()
+}

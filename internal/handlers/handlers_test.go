@@ -68,7 +68,7 @@ func setupTestApp(t *testing.T) (*core.App, *gin.Engine) {
 	cfg, err := config.LoadConfig()
 	assert.NoError(t, err)
 
-	cfg.DBRoot = t.TempDir() + "/"
+	cfg.Data = t.TempDir() + "/"
 	cfg.FS.Root = t.TempDir() + "/"
 
 	app := &core.App{

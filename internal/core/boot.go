@@ -10,7 +10,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-//go:embed db/migrations/*.sql
+//go:embed db/migrations/*
 var migrationsFS embed.FS
 
 func migrations(dialect string, db *sql.DB) error {
@@ -29,7 +29,7 @@ func migrations(dialect string, db *sql.DB) error {
 
 func BootDatabase(app *App) (func() error, error) {
 
-	db, err := sql.Open("sqlite3", path.Join(app.Config.DBRoot, "gochive.db"))
+	db, err := sql.Open("sqlite3", path.Join(app.Config.Data, "gochive.db"))
 	if err != nil {
 		return nil, err
 	}

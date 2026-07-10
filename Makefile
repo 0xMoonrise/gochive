@@ -2,10 +2,8 @@ include .env
 
 ENTRY=./cmd/gochive
 TARGET=gochive
-ROOT=/opt/gochive
-BACKUP=/mnt/usb/backups/gochive
 CGO_ENABLED=1
-MIGRATIONS_DIR=db/migrations
+MIGRATIONS_DIR=./internal/core/db/migrations
 
 .PHONY: db 
 
@@ -30,7 +28,7 @@ test:
 	go test ./...
 
 db:
-	sqlite3  -header -column $(ROOT)/gochive.db
+	sqlite3  -header -column $(ROOT)gochive.db
 
 sqlc:
 	sqlc generate -f db/sqlc.yml

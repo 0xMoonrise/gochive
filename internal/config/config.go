@@ -12,7 +12,8 @@ type Config struct {
 	Mode   Mode
 	Host   string
 	Port   string
-	DBRoot string
+	Data   string
+	Backup string
 	FS     FSClientConfig
 	S3     S3ClientConfig
 }
@@ -43,7 +44,8 @@ func LoadConfig() (*Config, error) {
 		Mode:   Mode(m),
 		Host:   os.Getenv("HOST"),
 		Port:   os.Getenv("PORT"),
-		DBRoot: os.Getenv("DB_ROOT"),
+		Data:   os.Getenv("DATA"),
+		Backup: os.Getenv("BACKUP"),
 		FS: FSClientConfig{
 			Root: os.Getenv("ROOT"),
 		},
