@@ -9,6 +9,7 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 - Markdown viewer with syntax highlighting, Mermaid diagrams, and MathJax equations
 - Pluggable storage backend: local filesystem or S3-compatible storage
 - SQLite database, managed with goose migrations
+- CLI (built on Cobra) for backups, thumbnail regeneration, and importing files from a URL
 
 ## Requirements
 
@@ -29,13 +30,15 @@ This step is already handled inside the Dockerfile if you build the image instea
 ## Running with Docker
 
 Build the image:
+
 ```sh
 docker build -t gochive:1.0 .
 ```
 
 Run the container:
+
 ```sh
-docker run --name gochive \
+docker run -d --name gochive \
   -v /opt/gochive/:/opt/gochive/ \
   --env-file=.env \
   -p 8080:8080 \
@@ -45,15 +48,27 @@ docker run --name gochive \
 ## Configuration
 
 `.env`
+
 ```bash
 HOST=0.0.0.0
 PORT=8080
 MODE=1
+ROOT=/opt/gochive/
+DATA=/opt/gochive/
+BACKUP=/mnt/usb/backups/gochive/
 ```
 
-`MODE` selects the storage backend: `1` for local filesystem, `2` for S3.
+| Variable | Description |
+|---|---|
+| `MODE` | Storage backend selector: `1` for local filesystem, `2` for S3-compatible storage. |
+| `ROOT` | Where the filesystem storage backend keeps uploaded files (only used when `MODE=1`). |
+| `DATA` | Where the SQLite database file lives (`$DATA/gochive.db`). |
+| `BACKUP` | Destination used by the CLI's `backup`/`restore` commands. |
+
+> `ROOT` and `DATA` are separate variables because storage and database location are decoupled by design — in most setups they'll point to the same path, but they can diverge (e.g. keeping the DB on faster local disk while archived files live elsewhere).
 
 S3 client environment variables (required only when `MODE=2`):
+
 ```bash
 BUCKET=
 ACCESS_KEY=
@@ -64,28 +79,45 @@ REGION=
 
 ## Database
 
-Migrations live in `db/migrations` and run against a SQLite file at `/opt/gochive/gochive.db`.
+Migrations live in `internal/core/db/migrations` and run against a SQLite file at `$DATA/gochive.db`.
 
 ```sh
 make migrate-up      # apply migrations
 make migrate-down    # roll back the last migration
-make migrate-status   # check current migration status
-make db               # open an interactive SQLite shell
+make migrate-status  # check current migration status
+make db              # open an interactive SQLite shell
 ```
 
-## Backups
+## Server
 
 ```sh
-make backup     # rsync /opt/gochive to the configured backup path
-make restore    # restore from the backup path
+./gochive
 ```
+
+Starts the HTTP server on `$HOST:$PORT`.
 
 ## CLI
 
-Besides running as a server, the binary accepts a subcommand:
+A separate `gochive-cli` binary (built from `cmd/cli`) provides maintenance and import commands:
 
 ```sh
-./gochive normalize
+gochive-cli backup                # rsync data to the configured backup path
+gochive-cli restore                # restore data from the backup path
+gochive-cli generate [id]          # regenerate a thumbnail by id, or all of them if omitted
+gochive-cli upload_archive <url>   # download a file from a URL and add it to the archive
+gochive-cli version                # print the CLI version
 ```
 
-`normalize` migrates files stored under their old filename-based keys to the current id-based storage layout. Running the binary with no arguments starts the HTTP server.
+`backup` and `restore` operate directly on the filesystem via `rsync -avu` between `DATA` and `BACKUP` (incremental, non-destructive — existing files are only updated if the source is newer, nothing is deleted) and don't require the storage client or database to be initialized. All other commands boot the configured storage backend and database before running.
+
+### Notes on `backup`/`restore`
+
+- These commands never run migrations or connect to storage — they only sync files between `DATA` and `BACKUP`. `ROOT` is not involved.
+- `backup` syncs `DATA` → `BACKUP`. `restore` syncs `BACKUP` → `DATA`, overwriting files under `DATA`; it prompts for confirmation before running.
+- Avoid running `backup` while uploads or thumbnail generation are in progress, since the SQLite database file could be captured mid-write.
+
+## Development notes
+
+- Thumbnail generation for a batch of files runs with bounded concurrency (a worker pool sized via a semaphore) rather than one goroutine per file, to avoid unbounded resource usage on large archives.
+- File uploads from a URL are capped at a fixed maximum size and use a context-scoped HTTP request, so a slow or oversized remote response can't hang or exhaust memory indefinitely.
+- DB writes and object storage writes for the same operation are wrapped so that a failure rolls back the database transaction; since `AUTOINCREMENT` ids are only reserved on commit, a failed attempt doesn't permanently burn an id or leave a permanently orphaned object.
