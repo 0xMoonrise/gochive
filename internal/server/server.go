@@ -47,7 +47,7 @@ func NewServer(app *core.App) *gin.Engine {
 	r.GET("/file/:id", handlers.GetFile(app))
 	r.GET("/view/:id", handlers.View(app))
 
-	r.GET("/images/:name", handlers.GetImage(app))
+	r.GET("/images/:id", handlers.GetImage(app))
 	r.GET("/get_files/:page", handlers.GetFiles(app))
 
 	r.POST("/upload",

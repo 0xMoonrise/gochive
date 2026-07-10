@@ -256,14 +256,14 @@ func TestIntegrity(t *testing.T) {
 func TestImageGeneration(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.GET("/images/:name", handlers.GetImage(app))
+	r.GET("/images/:id", handlers.GetImage(app))
 	r.POST("/upload", handlers.UploadFile(app))
 
 	t.Log("--- Generating image from a pdf file")
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
-	imageName := strconv.FormatInt(res.File.ID, 10)
+	imageId := strconv.FormatInt(res.File.ID, 10)
 
-	key := path.Join("images", imageName)
+	key := path.Join("images", imageId)
 	image, err := app.Storage.GetItem(t.Context(), key)
 	assert.NoError(t, err)
 
@@ -273,7 +273,7 @@ func TestImageGeneration(t *testing.T) {
 	sniffLen := min(len(data), 512)
 	assert.Equal(t, "image/webp", http.DetectContentType(data[:sniffLen]))
 
-	req := httptest.NewRequest(http.MethodGet, "/images/"+imageName, nil)
+	req := httptest.NewRequest(http.MethodGet, "/images/"+imageId, nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
@@ -282,13 +282,13 @@ func TestImageGeneration(t *testing.T) {
 
 	t.Log("--- Generating image from a md file")
 	res = uploadTestFile(t, r, uuid.New().String()+".md", []byte("# Hello world"))
-	imageName = strconv.FormatInt(res.File.ID, 10)
+	imageId = strconv.FormatInt(res.File.ID, 10)
 
-	key = path.Join("images", imageName)
+	key = path.Join("images", imageId)
 	image, err = app.Storage.GetItem(t.Context(), key)
 	assert.Error(t, err)
 
-	req = httptest.NewRequest(http.MethodGet, "/images/"+imageName, nil)
+	req = httptest.NewRequest(http.MethodGet, "/images/"+imageId, nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code, w.Body.String())

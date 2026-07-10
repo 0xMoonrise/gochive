@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path"
+	"strconv"
 
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,13 @@ import (
 func GetImage(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		paramName := c.Param("name")
-		objKey := path.Join("images", paramName)
+		id := c.Param("id")
+		if _, err := strconv.Atoi(id); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "invalid id"})
+			return
+		}
+
+		objKey := path.Join("images", id)
 		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
 			slog.Warn("Image not found", "error", err)
