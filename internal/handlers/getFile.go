@@ -16,7 +16,7 @@ func GetFile(app *core.App) gin.HandlerFunc {
 		ParamId := c.Param("id")
 		id, err := strconv.Atoi(ParamId)
 		if err != nil {
-			slog.Warn("The id param cannot convert to int")
+			slog.Warn("the id param cannot convert to int")
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"}) // check status requet
 			return
 		}

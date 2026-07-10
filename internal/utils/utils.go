@@ -3,7 +3,8 @@ package utils
 import (
 	"bytes"
 	"io"
-	"regexp"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/chai2010/webp"
@@ -64,8 +65,6 @@ func MakeThumbnail(
 }
 
 func ValidateFilename(filename string) bool {
-
-	match, _ := regexp.MatchString("^.+(pdf|md)$", filename)
-	return match
-
+	ext := strings.ToLower(filepath.Ext(filename))
+	return ext == ".pdf" || ext == ".md"
 }

@@ -19,7 +19,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 		search := c.PostForm("search")
 		page, err := strconv.ParseInt(c.Param("page"), 10, 64)
 		if err != nil {
-			slog.Error("cannot convert the page parameter on search file")
+			slog.Error("cannot convert the page parameter on search file", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 			return
 		}
@@ -29,7 +29,13 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 			Valid:  true,
 		}
 
-		pageElements, _ := app.DB.Queries.GetCountSearch(c, s)
+		pageElements, err := app.DB.Queries.GetCountSearch(c, s)
+		if err != nil {
+			slog.Error("cannot fetch the count", "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			return
+		}
+
 		pageLimit := math.Ceil(float64(pageElements) / float64(config.PAGE_SIZE))
 		if (page <= 0) || (page > int64(pageLimit)) {
 			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
@@ -45,7 +51,7 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 		data, err := app.DB.Queries.SearchArchive(c, searchParam)
 
 		if err != nil {
-			slog.Error("cannot fetch the data from database")
+			slog.Error("cannot fetch the data from database", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wront..."})
 			return
 		}

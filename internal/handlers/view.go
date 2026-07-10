@@ -58,7 +58,7 @@ func View(app *core.App) gin.HandlerFunc {
 		ParamId := c.Param("id")
 		id, err := strconv.Atoi(ParamId)
 		if err != nil {
-			slog.Error("Cannot convert id on view", "error", err)
+			slog.Error("cannot convert id on view", "error", err)
 			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
@@ -80,14 +80,14 @@ func View(app *core.App) gin.HandlerFunc {
 
 		vendor, err := loadVendorViewer()
 		if err != nil {
-			slog.Error("Load vendor failed on view", "error", err)
+			slog.Error("load vendor failed on view", "error", err)
 			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}
 
 		inject, err := renderHeadInject(filename, "/file/"+ParamId)
 		if err != nil {
-			slog.Error("Cannot inject content on view", "error", err)
+			slog.Error("cannot inject content on view", "error", err)
 			c.JSON(http.StatusBadRequest, "something went wrong")
 			return
 		}

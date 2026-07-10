@@ -18,12 +18,13 @@ func SetEditFile(app *core.App) gin.HandlerFunc {
 		editorial := c.PostForm("editorial")
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			slog.Error("cannot convert the page parameter on search file")
+			slog.Error("cannot convert the id parameter", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 			return
 		}
 
 		if !utils.ValidateFilename(filename) {
+			slog.Warn("invalid filename", "id", id)
 			c.JSON(http.StatusUnauthorized, gin.H{"status": "Extension not allowed"})
 			return
 		}
@@ -38,7 +39,7 @@ func SetEditFile(app *core.App) gin.HandlerFunc {
 		})
 
 		if err != nil {
-			slog.Error("cannot convert the page parameter on search file")
+			slog.Error("cannot update the values in to the data base", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
 			return
 		}

@@ -59,25 +59,39 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			})
 
 		if err != nil {
-			slog.Error("Error while trying to store metada file into the database", "error", err)
+			slog.Error("error while trying to store metada file into the database", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})
 			return
 		}
 
+		buffer := make([]byte, 512)
+		if int64(len(buffer)) > file.Size {
+			buffer = buffer[:file.Size]
+		}
+
+		n, err := fileReader.ReadAt(buffer, 0)
+		if err != nil && err != io.EOF {
+			slog.Error("error reading file for content-type detection", "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
+			return
+		}
+
+		contentType := http.DetectContentType(buffer[:n])
+
 		err = app.Storage.PutItem(
 			c.Request.Context(),
 			path.Join("files", strconv.Itoa(id)),
 			&core.Object{
 				Length:      file.Size,
-				ContentType: "application/octet-stream",
+				ContentType: contentType,
 				Reader:      fileReader,
 			},
 		)
 
 		if err != nil {
-			slog.Error("Error while trying to upload a file to storage", "error", err)
+			slog.Error("error while trying to upload a file to storage", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})
@@ -101,7 +115,7 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		image := &bytes.Buffer{}
 		err = utils.MakeThumbnail(fileReader, file.Size, 0, image)
 		if err != nil {
-			slog.Error("Error while trying to generate the thumbnail", "error", err)
+			slog.Error("error while trying to generate the thumbnail", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})
@@ -112,15 +126,18 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		imageReader := bytes.NewReader(imageBytes)
 		size := imageReader.Size()
 
+		sniff := min(len(imageBytes), 512)
+		contentType = http.DetectContentType(imageBytes[:sniff])
+
 		objKey := path.Join("images", strconv.Itoa(int(id)))
 		err = app.Storage.PutItem(c.Request.Context(), objKey, &core.Object{
 			Length:      size,
-			ContentType: "application/octet-stream",
+			ContentType: contentType,
 			Reader:      io.NopCloser(imageReader),
 		})
 
 		if err != nil {
-			slog.Error("Error while trying to upload a image to storage", "error", err)
+			slog.Error("error while trying to upload a image to storage", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})

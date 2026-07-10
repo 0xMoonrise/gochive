@@ -228,7 +228,7 @@ func TestIntegrity(t *testing.T) {
 
 	r.POST("/upload", handlers.UploadFile(app))
 
-	t.Log("--- Testing pdf file upload")
+	t.Log("--- testing pdf file upload")
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 	key := path.Join("files", strconv.FormatInt(res.File.ID, 10))
 
@@ -240,7 +240,7 @@ func TestIntegrity(t *testing.T) {
 
 	sameFile(t, PDF, data)
 
-	t.Log("--- Testing MD file upload")
+	t.Log("--- testing MD file upload")
 	res = uploadTestFile(t, r, uuid.New().String()+".md", []byte("# Hello world"))
 	key = path.Join("files", strconv.FormatInt(res.File.ID, 10))
 
@@ -259,7 +259,7 @@ func TestImageGeneration(t *testing.T) {
 	r.GET("/images/:id", handlers.GetImage(app))
 	r.POST("/upload", handlers.UploadFile(app))
 
-	t.Log("--- Generating image from a pdf file")
+	t.Log("--- generating image from a pdf file")
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 	imageId := strconv.FormatInt(res.File.ID, 10)
 
@@ -280,7 +280,7 @@ func TestImageGeneration(t *testing.T) {
 
 	sameFile(t, data, w.Body.Bytes())
 
-	t.Log("--- Generating image from a md file")
+	t.Log("--- generating image from a md file")
 	res = uploadTestFile(t, r, uuid.New().String()+".md", []byte("# Hello world"))
 	imageId = strconv.FormatInt(res.File.ID, 10)
 

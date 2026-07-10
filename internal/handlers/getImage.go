@@ -22,7 +22,7 @@ func GetImage(app *core.App) gin.HandlerFunc {
 		objKey := path.Join("images", id)
 		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
 		if err != nil {
-			slog.Warn("Image not found", "error", err)
+			slog.Warn("image not found", "error", err)
 			c.JSON(http.StatusNotFound, gin.H{"status": "not found"})
 			return
 		}

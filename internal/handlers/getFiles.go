@@ -17,14 +17,14 @@ func GetFiles(app *core.App) gin.HandlerFunc {
 
 		page, err := strconv.Atoi(c.Param("page"))
 		if err != nil {
-			slog.Error("Error trying to parse the page number")
+			slog.Error("error trying to parse the page number")
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong... "})
 			return
 		}
 
 		pageElements, err := app.DB.Queries.GetCountArchive(c)
 		if err != nil {
-			slog.Error("Something went wrong while trying to fetch data from database", "error", err)
+			slog.Error("something went wrong while trying to fetch data from database", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong... "})
 			return
 		}
@@ -42,7 +42,7 @@ func GetFiles(app *core.App) gin.HandlerFunc {
 			})
 
 		if err != nil {
-			slog.Error("Error fetching the data from database.")
+			slog.Error("error fetching the data from database.")
 			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
 			return
 		}
