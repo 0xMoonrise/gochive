@@ -15,7 +15,8 @@ function getCookie(name) {
 }
 
 function currentPage() {
-  return parseInt(getCookie('page')) || 1;
+  const page = parseInt(getCookie('page'), 10);
+  return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
 function currentQuery() {
@@ -296,8 +297,15 @@ async function loadFiles(page, searchQuery = null) {
       { method: "GET" };
 
     const response = await fetch(url, options);
-    const data = await response.json();
 
+    if (!response.ok) {
+      if (page !== 1) {
+        return loadFiles(1, searchQuery);
+      }
+      throw new Error(`Failed to load files: ${response.status}`);
+    }
+
+    const data = await response.json();
     updateFileView(data.files);
     updatePagination(data.pages, page);
   } catch (error) {
