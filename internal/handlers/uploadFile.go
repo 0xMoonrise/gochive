@@ -47,6 +47,7 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		tx, err := app.DB.Begin()
 		if err != nil {
 			slog.Error("failed to begin transaction", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong"})
 			return
 		}
 
@@ -66,26 +67,22 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
-		buffer := make([]byte, 512)
-		if int64(len(buffer)) > file.Size {
-			buffer = buffer[:file.Size]
-		}
-
-		n, err := fileReader.ReadAt(buffer, 0)
+		contentType := make([]byte, 512)
+		n, err := fileReader.ReadAt(contentType, 0)
 		if err != nil && err != io.EOF {
-			slog.Error("error reading file for content-type detection", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"})
+			slog.Error("error while trying to read 512 for content type detection", "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "Uploaded unsuccessful",
+			})
 			return
 		}
-
-		contentType := http.DetectContentType(buffer[:n])
 
 		err = app.Storage.PutItem(
 			c.Request.Context(),
 			path.Join("files", strconv.Itoa(id)),
 			&core.Object{
 				Length:      file.Size,
-				ContentType: contentType,
+				ContentType: utils.DetectContentType(contentType[:n]),
 				Reader:      fileReader,
 			},
 		)
@@ -99,6 +96,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 		}
 
 		if strings.HasSuffix(file.Filename, ".md") {
+			if err := tx.Commit(); err != nil {
+				slog.Error("failed to commit transaction on markdown commit", "error", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong"})
+				return
+			}
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"file": gin.H{
@@ -108,7 +110,6 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 					"favorite":  false,
 				},
 			})
-			tx.Commit()
 			return
 		}
 
@@ -124,15 +125,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 
 		imageBytes := image.Bytes()
 		imageReader := bytes.NewReader(imageBytes)
-		size := imageReader.Size()
-
-		sniff := min(len(imageBytes), 512)
-		contentType = http.DetectContentType(imageBytes[:sniff])
 
 		objKey := path.Join("images", strconv.Itoa(int(id)))
 		err = app.Storage.PutItem(c.Request.Context(), objKey, &core.Object{
-			Length:      size,
-			ContentType: contentType,
+			Length:      imageReader.Size(),
+			ContentType: utils.DetectContentType(imageBytes),
 			Reader:      io.NopCloser(imageReader),
 		})
 
@@ -141,6 +138,12 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status": "Uploaded unsuccessful",
 			})
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			slog.Error("failed to commit transaction at the end of upload handler", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong"})
 			return
 		}
 
@@ -154,6 +157,5 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			},
 		})
 
-		tx.Commit()
 	}
 }

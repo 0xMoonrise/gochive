@@ -104,14 +104,17 @@ func downloadFile(url *url.URL, app *core.App) error {
 	}
 
 	pr := &progressReader{reader: res.Body, total: res.ContentLength}
-
 	limitedReader := io.LimitReader(pr, config.MAX_UPLOAD_SIZE+1)
-	file, err := io.ReadAll(limitedReader)
+	buffer := bytes.Buffer{}
+
+	bufferLength, err := io.Copy(&buffer, limitedReader)
 	if err != nil {
 		return err
 	}
+
+	file := buffer.Bytes()
 	fmt.Println()
-	if len(file) > config.MAX_UPLOAD_SIZE {
+	if bufferLength > config.MAX_UPLOAD_SIZE {
 		return errors.New("file exceeds maximum allowed size of 60MB")
 	}
 
@@ -130,6 +133,7 @@ func downloadFile(url *url.URL, app *core.App) error {
 		Filename:  filename,
 		Editorial: "Default",
 	})
+
 	if err != nil {
 		return err
 	}
@@ -137,9 +141,9 @@ func downloadFile(url *url.URL, app *core.App) error {
 	key := strconv.Itoa(id)
 	objKey := path.Join("files", key)
 	obj := &core.Object{
-		Length:      int64(len(file)),
-		ContentType: res.Header.Get("Content-Type"),
-		Reader:      io.NopCloser(bytes.NewReader(file)),
+		Length:      bufferLength,
+		ContentType: utils.DetectContentType(file),
+		Reader:      io.NopCloser(&buffer),
 	}
 
 	if err := app.Storage.PutItem(ctx, objKey, obj); err != nil {
@@ -153,15 +157,15 @@ func downloadFile(url *url.URL, app *core.App) error {
 	}
 
 	image := &bytes.Buffer{}
-	if err := utils.MakeThumbnail(bytes.NewReader(file), int64(len(file)), 0, image); err != nil {
+	if err := utils.MakeThumbnail(bytes.NewReader(file), bufferLength, 0, image); err != nil {
 		return err
 	}
 
 	imageBytes := image.Bytes()
 	objKey = path.Join("images", key)
 	obj = &core.Object{
-		Length:      int64(len(imageBytes)),
-		ContentType: http.DetectContentType(imageBytes[:512]),
+		Length:      int64(image.Len()),
+		ContentType: utils.DetectContentType(imageBytes),
 		Reader:      io.NopCloser(bytes.NewReader(imageBytes)),
 	}
 

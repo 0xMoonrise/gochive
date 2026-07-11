@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"io"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -67,4 +68,9 @@ func MakeThumbnail(
 func ValidateFilename(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
 	return ext == ".pdf" || ext == ".md"
+}
+
+func DetectContentType(data []byte) string {
+	sniffLen := min(len(data), 512)
+	return http.DetectContentType(data[:sniffLen])
 }
