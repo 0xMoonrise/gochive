@@ -18,6 +18,7 @@ type App struct {
 	DB      Database
 	Storage Store
 	Config  *config.Config
+	closeDB func() error
 }
 
 type Object struct {

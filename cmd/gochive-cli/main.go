@@ -1,30 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"log/slog"
 	"os"
 
-	"github.com/0xMoonrise/gochive/internal/config"
-	"github.com/0xMoonrise/gochive/internal/core"
+	"github.com/spf13/cobra"
 )
 
-func Execute() error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		slog.Error("Something went wrong while loading the config", "config", err)
-		return err
+func rootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:   "gochive",
+		Short: "gochive-cli to interact with the Gochive backend",
 	}
 
-	app := &core.App{Config: cfg}
+	root.AddCommand(version())
+	root.AddCommand(status())
+	root.AddCommand(newBackupCmd())
+	root.AddCommand(newRestoreCmd())
+	root.AddCommand(newGenerateThumbnail())
+	root.AddCommand(newUploadArchive())
 
-	cmd := rootCmd(app)
-	return cmd.Execute()
+	return root
 }
 
 func main() {
-	if err := Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	cmd := rootCmd()
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

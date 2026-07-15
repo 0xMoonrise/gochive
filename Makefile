@@ -22,7 +22,7 @@ db:
 	sqlite3  -header -column $(DATA)/gochive.db
 
 sqlc:
-	sqlc generate -f db/sqlc.yml
+	sqlc generate -f ./internal/database/sqlc.yml
 
 tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest

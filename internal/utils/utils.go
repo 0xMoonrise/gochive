@@ -58,10 +58,13 @@ func MakeThumbnail(
 	if err != nil {
 		return
 	}
-	err = webp.Encode(imageBuffer, pageRender.Result.Image, &webp.Options{Quality: 100})
-	if err != nil {
+
+	if err = webp.Encode(imageBuffer,
+		pageRender.Result.Image,
+		&webp.Options{Quality: 100}); err != nil {
 		return
 	}
+
 	return
 }
 

@@ -1,45 +1,43 @@
 package server
 
 import (
-	"log"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
 
 var cachedCSS []byte
-var once sync.Once
 
-func injectConentCss() gin.HandlerFunc {
+func loadViewerCSS() error {
+	viewerCSS, err := os.ReadFile("/opt/gochive/lib/pdfjs/web/viewer.css")
+	if err != nil {
+		return errors.New("cannot read viewer.css")
+	}
+
+	userCSS, err := os.ReadFile("static/styles/userContent.css")
+	if err != nil {
+		return errors.New("cannot read userContent.css")
+	}
+
+	buf := make([]byte, 0, len(viewerCSS)+len(userCSS)+32)
+	buf = append(buf, viewerCSS...)
+	buf = append(buf, "\n\n/* userContent.css */\n"...)
+	buf = append(buf, userCSS...)
+
+	cachedCSS = buf
+	return nil
+}
+
+func injectContentCSS() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasSuffix(c.Request.URL.Path, "viewer.css") {
-			once.Do(func() {
-				viewerCSS, err := os.ReadFile("/opt/gochive/lib/pdfjs/web/viewer.css")
-				if err != nil {
-					log.Printf("InjectUserCSS: failed to read viewer.css: %v", err)
-					return
-				}
-				userCSS, err := os.ReadFile("static/styles/userContent.css")
-				if err != nil {
-					log.Printf("InjectUserCSS: failed to read userContent.css: %v", err)
-					return
-				}
-				cachedCSS = append(append(viewerCSS, "\n\n/* userContent.css */\n"...), userCSS...)
-			})
-
-			if len(cachedCSS) == 0 {
-				c.Status(http.StatusInternalServerError)
-				c.Abort()
-				return
-			}
-			c.Data(http.StatusOK, "text/css", cachedCSS)
-			c.Abort()
+		if !strings.HasSuffix(c.Request.URL.Path, "viewer.css") {
+			c.Next()
 			return
 		}
-
-		c.Next()
+		c.Data(http.StatusOK, "text/css", cachedCSS)
+		c.Abort()
 	}
 }

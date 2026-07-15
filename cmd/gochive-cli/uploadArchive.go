@@ -20,7 +20,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newUploadArchive(app *core.App) *cobra.Command {
+func newUploadArchive() *cobra.Command {
+	app := core.NewApp()
 	return &cobra.Command{
 		Use:   "upload_archive <url>",
 		Short: "Upload an archive from a URL",
@@ -29,6 +30,13 @@ func newUploadArchive(app *core.App) *cobra.Command {
 gochive upload_archive https://example.com/archive.md`,
 		Args:                  cobra.ExactArgs(1),
 		DisableFlagsInUseLine: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Run(
+				core.StageConfig,
+				core.StageDB,
+				core.StageStorage,
+			)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url, err := isValidURL(args[0])
 
@@ -37,6 +45,9 @@ gochive upload_archive https://example.com/archive.md`,
 			}
 
 			return downloadFile(url, app)
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Cleanup()
 		},
 	}
 }
@@ -143,13 +154,12 @@ func downloadFile(url *url.URL, app *core.App) error {
 	obj := &core.Object{
 		Length:      bufferLength,
 		ContentType: utils.DetectContentType(file),
-		Reader:      io.NopCloser(&buffer),
+		Reader:      io.NopCloser(bytes.NewReader(file)),
 	}
 
 	if err := app.Storage.PutItem(ctx, objKey, obj); err != nil {
 		return err
 	}
-
 	if path.Ext(filename) == ".md" {
 		slog.Info("A Markdown file does not require a thumbnail to be generated.")
 		slog.Info("File successfully uploaded", "id", key)

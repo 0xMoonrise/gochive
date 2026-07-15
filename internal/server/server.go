@@ -34,9 +34,11 @@ func NewEngine() *gin.Engine {
 }
 
 func NewServer(app *core.App) *gin.Engine {
+
+	loadViewerCSS()
 	r := NewEngine()
 
-	r.Use(injectConentCss())
+	r.Use(injectContentCSS())
 	r.Static("/static", "./static")
 	r.Static("/lib", "/opt/gochive/lib")
 	r.StaticFile("/favicon.ico", "static/favicon.ico")

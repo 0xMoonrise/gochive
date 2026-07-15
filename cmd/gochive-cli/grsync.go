@@ -8,20 +8,28 @@ import (
 	"github.com/zloylos/grsync"
 )
 
-func newBackupCmd(app *core.App) *cobra.Command {
+func newBackupCmd() *cobra.Command {
+	app := core.NewApp()
 	return &cobra.Command{
 		Use:   "backup",
 		Short: "Backup gochive data to the external backup location",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Run(core.StageConfig)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRsync(app.Config.Data+"/", app.Config.Backup+"/")
 		},
 	}
 }
 
-func newRestoreCmd(app *core.App) *cobra.Command {
+func newRestoreCmd() *cobra.Command {
+	app := core.NewApp()
 	return &cobra.Command{
 		Use:   "restore",
 		Short: "Restore gochive data from the external backup location",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Run(core.StageConfig)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRsync(app.Config.Backup+"/", app.Config.Data+"/")
 		},

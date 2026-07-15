@@ -17,7 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGenerateThumbnail(app *core.App) *cobra.Command {
+func newGenerateThumbnail() *cobra.Command {
+	app := core.NewApp()
 	return &cobra.Command{
 		Use:   "generate [id]",
 		Short: "Generate thumbnail(s)",
@@ -26,6 +27,14 @@ func newGenerateThumbnail(app *core.App) *cobra.Command {
   gochive generate`,
 		Args:                  cobra.RangeArgs(0, 1),
 		DisableFlagsInUseLine: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Run(
+				core.StageConfig,
+				core.StageDB,
+				core.StageStorage,
+			)
+		},
+
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return generateAllThumbnail(app)
@@ -35,6 +44,9 @@ func newGenerateThumbnail(app *core.App) *cobra.Command {
 			defer cancel()
 
 			return generateOneThumbnail(ctx, app, args[0])
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return app.Cleanup()
 		},
 	}
 }

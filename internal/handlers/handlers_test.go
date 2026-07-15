@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/0xMoonrise/gochive/internal/server"
@@ -65,29 +64,19 @@ func setupTestApp(t *testing.T) (*core.App, *gin.Engine) {
 
 	gin.SetMode(gin.TestMode)
 
-	cfg, err := config.LoadConfig()
-	assert.NoError(t, err)
+	app := core.NewApp()
 
-	cfg.Data = t.TempDir() + "/"
-	cfg.FS.Root = t.TempDir() + "/"
+	app.Run(
+		core.StageConfig,
+		core.StageDB,
+		core.StageStorage,
+	)
 
-	app := &core.App{
-		Config: cfg,
-	}
-
-	client, err := app.SetMode()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	app.Storage = client
-
-	closeDB, err := core.BootDatabase(app)
-	assert.NoError(t, err)
+	app.Config.Data = t.TempDir() + "/"
+	app.Config.FS.Root = t.TempDir() + "/"
 
 	r := server.NewEngine()
-	t.Cleanup(func() { closeDB() })
-
+	t.Cleanup(func() { app.Cleanup() })
 	return app, r
 }
 
