@@ -61,19 +61,17 @@ func TestMain(m *testing.M) {
 
 func setupTestApp(t *testing.T) (*core.App, *gin.Engine) {
 	t.Helper()
-
 	gin.SetMode(gin.TestMode)
 
 	app := core.NewApp()
-
-	app.Run(
-		core.StageConfig,
-		core.StageDB,
-		core.StageStorage,
-	)
+	err := app.Run(core.StageConfig)
+	assert.NoError(t, err)
 
 	app.Config.Data = t.TempDir() + "/"
 	app.Config.FS.Root = t.TempDir() + "/"
+
+	err = app.Run(core.StageDB, core.StageStorage)
+	assert.NoError(t, err)
 
 	r := server.NewEngine()
 	t.Cleanup(func() { app.Cleanup() })

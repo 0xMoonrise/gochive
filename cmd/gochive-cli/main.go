@@ -8,7 +8,7 @@ import (
 
 func rootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:   "gochive",
+		Use:   "gochive-cli",
 		Short: "gochive-cli to interact with the Gochive backend",
 	}
 

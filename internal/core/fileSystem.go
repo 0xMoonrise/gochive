@@ -3,10 +3,11 @@ package core
 import (
 	"context"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/0xMoonrise/gochive/internal/utils"
 )
 
 type fsClient struct {
@@ -15,6 +16,7 @@ type fsClient struct {
 
 func (c *fsClient) GetItem(ctx context.Context, objKey string) (obj *Object, err error) {
 	pathTo := path.Join(c.Path, objKey)
+
 	file, err := os.OpenFile(pathTo, os.O_RDONLY, 0644)
 	if err != nil {
 		return
@@ -35,10 +37,7 @@ func (c *fsClient) GetItem(ctx context.Context, objKey string) (obj *Object, err
 		return
 	}
 
-	obj.ContentType = http.DetectContentType(buffer[:n])
-	if obj.ContentType == "" {
-		obj.ContentType = "application/octet-stream"
-	}
+	obj.ContentType = utils.DetectContentType(buffer[:n])
 
 	obj.Reader = file
 	return
