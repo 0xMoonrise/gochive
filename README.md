@@ -9,11 +9,10 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 - Markdown viewer with syntax highlighting, Mermaid diagrams, and MathJax equations
 - Pluggable storage backend: local filesystem or S3-compatible storage
 - SQLite database, managed with goose migrations
-- CLI (built on Cobra) for backups, thumbnail regeneration, and importing files from a URL
+- CLI (built on Cobra) for backups, thumbnail regeneration, importing files from a URL, and inspecting the active configuration
 
 ## Requirements
 
-- Go 1.24+
 - SQLite3
 - A C toolchain (gcc, pkg-config) for building against pdfium
 
@@ -77,6 +76,8 @@ S3_ENDPOINT=
 REGION=
 ```
 
+Run `gochive-cli status` at any time to print the resolved configuration (mode, paths, and the relevant S3/filesystem settings) without starting the server.
+
 ## Database
 
 Migrations live in `internal/core/db/migrations` and run against a SQLite file at `$DATA/gochive.db`.
@@ -86,6 +87,12 @@ make migrate-up      # apply migrations
 make migrate-down    # roll back the last migration
 make migrate-status  # check current migration status
 make db              # open an interactive SQLite shell
+```
+
+Query code is generated with sqlc from `internal/database/sqlc.yml`:
+
+```sh
+make sqlc
 ```
 
 ## Server
@@ -98,26 +105,13 @@ Starts the HTTP server on `$HOST:$PORT`.
 
 ## CLI
 
-A separate `gochive-cli` binary (built from `cmd/cli`) provides maintenance and import commands:
+A separate `gochive-cli` binary (built from `cmd/gochive-cli`) provides maintenance and import commands:
 
 ```sh
-gochive-cli backup                # rsync data to the configured backup path
+gochive-cli status                 # print the active configuration
+gochive-cli backup                 # rsync data to the configured backup path
 gochive-cli restore                # restore data from the backup path
 gochive-cli generate [id]          # regenerate a thumbnail by id, or all of them if omitted
 gochive-cli upload_archive <url>   # download a file from a URL and add it to the archive
 gochive-cli version                # print the CLI version
 ```
-
-`backup` and `restore` operate directly on the filesystem via `rsync -avu` between `DATA` and `BACKUP` (incremental, non-destructive — existing files are only updated if the source is newer, nothing is deleted) and don't require the storage client or database to be initialized. All other commands boot the configured storage backend and database before running.
-
-### Notes on `backup`/`restore`
-
-- These commands never run migrations or connect to storage — they only sync files between `DATA` and `BACKUP`. `ROOT` is not involved.
-- `backup` syncs `DATA` → `BACKUP`. `restore` syncs `BACKUP` → `DATA`, overwriting files under `DATA`; it prompts for confirmation before running.
-- Avoid running `backup` while uploads or thumbnail generation are in progress, since the SQLite database file could be captured mid-write.
-
-## Development notes
-
-- Thumbnail generation for a batch of files runs with bounded concurrency (a worker pool sized via a semaphore) rather than one goroutine per file, to avoid unbounded resource usage on large archives.
-- File uploads from a URL are capped at a fixed maximum size and use a context-scoped HTTP request, so a slow or oversized remote response can't hang or exhaust memory indefinitely.
-- DB writes and object storage writes for the same operation are wrapped so that a failure rolls back the database transaction; since `AUTOINCREMENT` ids are only reserved on commit, a failed attempt doesn't permanently burn an id or leave a permanently orphaned object.
