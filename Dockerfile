@@ -11,24 +11,19 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o app ./cmd/gochive
+RUN go build -o gochive ./cmd/gochive
 
 FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
-
 RUN apt-get update && apt-get install -y \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/app ./
+COPY --from=builder /app/gochive .
 COPY --from=builder /usr/local/lib/libpdfium.so /usr/local/lib/
-
 COPY --from=builder /app/static ./static
-
-COPY --from=builder /opt/gochive/lib/pdfjs/web /opt/gochive/lib/pdfjs/web
-COPY --from=builder /opt/gochive/lib/pdfjs/build /opt/gochive/lib/pdfjs/build
 
 RUN ldconfig
 
-CMD ["./app"]
+CMD ["./gochive"]

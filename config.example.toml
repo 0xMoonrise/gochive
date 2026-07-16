@@ -1,0 +1,25 @@
+# Basic configuration
+# Storage mode: 1 = filesystem, 2 = s3
+mode = 1
+
+# Address and port the server listens on
+host = "0.0.0.0"
+port = "8080"
+
+# Directory where the SQLite database and app data live
+data = "/opt/gochive/"
+
+# Directory (or mount) used as backup destination
+backup = "/mnt/usb/backups/gochive/"
+
+# Filesystem storage (required if mode = 1)
+[fs]
+root = "/opt/gochive/"
+
+# S3 storage (required if mode = 2, omit otherwise)
+# [s3]
+# bucket = "gochive"
+# access_key = "..."
+# secret_key = "..."
+# s3_endpoint = "https://s3.example.com"
+# region = "us-east-1"

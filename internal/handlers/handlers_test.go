@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/0xMoonrise/gochive/internal/server"
@@ -59,18 +60,28 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func newTestConfig(t *testing.T) *config.Config {
+	t.Helper()
+	return &config.Config{
+		Mode: config.FS,
+		Data: t.TempDir() + "/",
+		FS: config.FSClientConfig{
+			Root: t.TempDir() + "/",
+		},
+	}
+}
+
 func setupTestApp(t *testing.T) (*core.App, *gin.Engine) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 
 	app := core.NewApp()
-	err := app.Run(core.StageConfig)
-	assert.NoError(t, err)
+	app.Config = newTestConfig(t)
 
-	app.Config.Data = t.TempDir() + "/"
-	app.Config.FS.Root = t.TempDir() + "/"
-
-	err = app.Run(core.StageDB, core.StageStorage)
+	err := app.Run(
+		core.StageDB,
+		core.StageStorage,
+	)
 	assert.NoError(t, err)
 
 	r := server.NewEngine()

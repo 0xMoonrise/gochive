@@ -24,7 +24,72 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 ./setup.sh
 ```
 
-This step is already handled inside the Dockerfile if you build the image instead of running gochive directly on the host.
+This step is only partially handled inside the Dockerfile. The C toolchain and `libpdfium.so` are built into the image, but the `pdfjs` frontend assets are not baked in. The runtime image expects them to be present at `/opt/gochive/` on the host, brought in via the bind mount described below (`-v /opt/gochive/:/opt/gochive/`). If you are building and running the image on a fresh host, run `./setup.sh` there first, or otherwise populate `/opt/gochive/`, before starting the container. Docker alone is not self-contained for this dependency.
+
+## Configuration
+
+Gochive is configured via a TOML file. The configuration file is resolved in the following order. The first candidate found is used.
+
+1. The path set in the `GOCHIVE_CONFIG` environment variable, if present.
+2. `/opt/gochive/config.toml`.
+3. `./config.toml`, relative to the current working directory.
+4. `~/.config/gochive/config.toml`.
+
+If none of these paths resolve to an existing file, startup fails with an explicit error.
+
+A documented `config.example.toml` ships in the repo and inside the Docker image as a reference. Copy it to `config.toml` and adjust it for your setup. Never commit your real `config.toml`. It is excluded via `.gitignore`.
+
+```toml
+# Basic configuration
+# Storage mode: 1 = filesystem, 2 = s3
+mode = 1
+
+# Address and port the server listens on
+host = "0.0.0.0"
+port = "8080"
+
+# Directory where the SQLite database lives ($DATA/gochive.db)
+data = "/opt/gochive/"
+
+# Directory (or mount) used as backup destination by the CLI
+backup = "/mnt/usb/backups/gochive/"
+
+# Filesystem storage (required if mode = 1)
+[fs]
+root = "/opt/gochive/"
+
+# S3 storage (required if mode = 2, omit otherwise)
+# [s3]
+# bucket = "gochive"
+# access_key = "..."
+# secret_key = "..."
+# s3_endpoint = "https://s3.example.com"
+# region = "us-east-1"
+```
+
+| Field | Description |
+|---|---|
+| `mode` | Storage backend selector: `1` for local filesystem, `2` for S3-compatible storage. |
+| `host` / `port` | Address and port the HTTP server binds to. |
+| `data` | Where the SQLite database file lives (`$data/gochive.db`). |
+| `backup` | Destination used by the CLI's `backup`/`restore` commands. |
+| `fs.root` | Where the filesystem storage backend keeps uploaded files (only used when `mode = 1`). |
+| `s3.*` | S3-compatible client settings, only used when `mode = 2`. |
+
+> `fs.root` and `data` are separate fields because storage and database location are decoupled by design. In most setups they point to the same path, but they can diverge, for example keeping the database on faster local disk while archived files live elsewhere.
+
+### S3 secrets
+
+`s3.access_key` and `s3.secret_key` can be set in `config.toml`, but for production deployments it is recommended to keep them out of the file entirely and provide them via environment variables instead, which override the values from the file if present:
+
+```bash
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+```
+
+This keeps credentials out of any file that persists on disk or gets baked into a container image, and makes rotating a key a matter of updating an env var rather than editing a config file on the server.
+
+Run `gochive-cli status` at any time to print the resolved configuration (mode, paths, and the relevant S3/filesystem settings) without starting the server.
 
 ## Running with Docker
 
@@ -34,53 +99,23 @@ Build the image:
 docker build -t gochive:1.0 .
 ```
 
-Run the container:
+The image only ships `config.example.toml` for reference. Your real `config.toml` is never baked into the image and must be mounted at runtime:
 
 ```sh
 docker run -d --name gochive \
+  -v /opt/gochive/config.toml:/app/config.toml:ro \
   -v /opt/gochive/:/opt/gochive/ \
-  --env-file=.env \
+# -e S3_ACCESS_KEY=... \
+# -e S3_SECRET_KEY=... \
   -p 8080:8080 \
-  --rm gochive:1.0
+  gochive:1.0
 ```
 
-## Configuration
-
-`.env`
-
-```bash
-HOST=0.0.0.0
-PORT=8080
-MODE=1
-ROOT=/opt/gochive/
-DATA=/opt/gochive/
-BACKUP=/mnt/usb/backups/gochive/
-```
-
-| Variable | Description |
-|---|---|
-| `MODE` | Storage backend selector: `1` for local filesystem, `2` for S3-compatible storage. |
-| `ROOT` | Where the filesystem storage backend keeps uploaded files (only used when `MODE=1`). |
-| `DATA` | Where the SQLite database file lives (`$DATA/gochive.db`). |
-| `BACKUP` | Destination used by the CLI's `backup`/`restore` commands. |
-
-> `ROOT` and `DATA` are separate variables because storage and database location are decoupled by design — in most setups they'll point to the same path, but they can diverge (e.g. keeping the DB on faster local disk while archived files live elsewhere).
-
-S3 client environment variables (required only when `MODE=2`):
-
-```bash
-BUCKET=
-ACCESS_KEY=
-SECRET_KEY=
-S3_ENDPOINT=
-REGION=
-```
-
-Run `gochive-cli status` at any time to print the resolved configuration (mode, paths, and the relevant S3/filesystem settings) without starting the server.
+(Omit the `S3_*` env vars entirely if you are running in `mode = 1`.)
 
 ## Database
 
-Migrations live in `internal/core/db/migrations` and run against a SQLite file at `$DATA/gochive.db`.
+Migrations live in `internal/core/db/migrations` and run against a SQLite file at `$data/gochive.db`.
 
 ```sh
 make migrate-up      # apply migrations
@@ -101,7 +136,7 @@ make sqlc
 ./gochive
 ```
 
-Starts the HTTP server on `$HOST:$PORT`.
+Starts the HTTP server on `$host:$port`.
 
 ## CLI
 

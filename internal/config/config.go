@@ -1,61 +1,71 @@
 package config
 
 import (
-	"log/slog"
+	"fmt"
 	"os"
-	"strconv"
+	"path/filepath"
 
-	"github.com/joho/godotenv"
+	"github.com/BurntSushi/toml"
 )
 
 type Config struct {
-	Mode   Mode
-	Host   string
-	Port   string
-	Data   string
-	Backup string
-	FS     FSClientConfig
-	S3     S3ClientConfig
-}
-
-type S3ClientConfig struct {
-	Bucket     string
-	AccessKey  string
-	SecretKey  string
-	S3Endpoint string
-	Region     string
+	Mode   Mode           `toml:"mode"`
+	Host   string         `toml:"host"`
+	Port   string         `toml:"port"`
+	Data   string         `toml:"data"`
+	Backup string         `toml:"backup"`
+	FS     FSClientConfig `toml:"fs"`
+	S3     S3ClientConfig `toml:"s3"`
 }
 
 type FSClientConfig struct {
-	Root string
+	Root string `toml:"root"`
+}
+
+type S3ClientConfig struct {
+	Bucket     string `toml:"bucket"`
+	AccessKey  string `toml:"access_key"`
+	SecretKey  string `toml:"secret_key"`
+	S3Endpoint string `toml:"s3_endpoint"`
+	Region     string `toml:"region"`
+}
+
+func findConfigPath() (string, error) {
+	if p := os.Getenv("GOCHIVE_CONFIG"); p != "" {
+		return p, nil
+	}
+
+	candidates := []string{
+		"/opt/gochive/config.toml",
+		"./config.toml",
+		filepath.Join(os.Getenv("HOME"), ".config/gochive/config.toml"),
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c, nil
+		}
+	}
+
+	return "", fmt.Errorf("no config file found in known locations")
 }
 
 func LoadConfig() (*Config, error) {
-
-	if err := godotenv.Load("/opt/gochive/.env"); err != nil {
-		slog.Warn("no .env file found, relying on real env vars")
-	}
-
-	m, err := strconv.Atoi(os.Getenv("MODE"))
+	path, err := findConfigPath()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Config{
-		Mode:   Mode(m),
-		Host:   os.Getenv("HOST"),
-		Port:   os.Getenv("PORT"),
-		Data:   os.Getenv("DATA"),
-		Backup: os.Getenv("BACKUP"),
-		FS: FSClientConfig{
-			Root: os.Getenv("ROOT"),
-		},
-		S3: S3ClientConfig{
-			Bucket:     os.Getenv("BUCKET"),
-			AccessKey:  os.Getenv("ACCESS_KEY"),
-			SecretKey:  os.Getenv("SECRET_KEY"),
-			S3Endpoint: os.Getenv("S3_ENDPOINT"),
-			Region:     os.Getenv("REGION"),
-		},
-	}, nil
+	var cfg Config
+	if _, err := toml.DecodeFile(path, &cfg); err != nil {
+		return nil, fmt.Errorf("parsing config %s: %w", path, err)
+	}
+
+	if k := os.Getenv("S3_ACCESS_KEY"); k != "" {
+		cfg.S3.AccessKey = k
+	}
+	if k := os.Getenv("S3_SECRET_KEY"); k != "" {
+		cfg.S3.SecretKey = k
+	}
+
+	return &cfg, nil
 }
