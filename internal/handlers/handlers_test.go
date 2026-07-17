@@ -337,12 +337,12 @@ func TestEditFile_InvalidExtension(t *testing.T) {
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 
 	w := editFile(t, r, res.File.ID, "malicious.exe", "New Editorial")
-	assert.Equal(t, http.StatusUnauthorized, w.Code, w.Body.String())
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
 
 	res = uploadTestFile(t, r, uuid.New().String()+".md", []byte("# Hello world"))
 
 	w = editFile(t, r, res.File.ID, "malicious.exe", "New Editorial")
-	assert.Equal(t, http.StatusUnauthorized, w.Code, w.Body.String())
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
 
 }
 
