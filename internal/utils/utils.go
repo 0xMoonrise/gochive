@@ -77,3 +77,7 @@ func DetectContentType(data []byte) string {
 	sniffLen := min(len(data), 512)
 	return http.DetectContentType(data[:sniffLen])
 }
+
+func IsTooLong(input string) bool {
+	return len(input) > 255
+}

@@ -42,15 +42,16 @@
   </div>
   <script src="/lib/highlightjs/highlight.min.js"></script>
   <script type="module">
-    import { Marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+    import { Marked } from "/lib/marked/marked.esm.js";
     import mermaid from "/lib/mermaid/mermaid.esm.min.mjs";
     import { addCopyButtons } from "/static/js/copy.js";
+    import DOMPurify from "/lib/dompurify/purify.es.mjs";
 
     hljs.registerAliases("mermaid", { languageName: "plaintext" });
     mermaid.initialize({
       startOnLoad: false,
       theme: 'dark',
-      securityLevel: 'loose'
+      securityLevel: 'strict'
     });
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -62,10 +63,13 @@
           container.innerHTML = `<p>File not found (${res.status}).</p>`;
           return;
         }
+
         const rawMarkdown = await res.text();
         const marked = new Marked();
-        container.innerHTML = marked.parse(rawMarkdown);
+        const rawHtml = marked.parse(rawMarkdown);
+        const cleanHtml = DOMPurify.sanitize(rawHtml, { FORBID_TAGS: ['style'] });
 
+        container.innerHTML = cleanHtml;
         container.querySelectorAll("pre code:not(.language-mermaid)").forEach((block) => {
           hljs.highlightElement(block);
         });

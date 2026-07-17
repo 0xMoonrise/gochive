@@ -73,13 +73,12 @@ func generateOneThumbnail(ctx context.Context, app *core.App, arg string) error 
 	if err != nil {
 		return err
 	}
+	defer item.Reader.Close()
 
 	fileData, err := io.ReadAll(item.Reader)
 	if err != nil {
 		return err
 	}
-
-	defer item.Reader.Close()
 
 	image := &bytes.Buffer{}
 	if err := utils.MakeThumbnail(bytes.NewReader(fileData), item.Length, 0, image); err != nil {

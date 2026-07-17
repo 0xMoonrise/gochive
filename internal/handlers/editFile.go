@@ -9,13 +9,13 @@ import (
 	"github.com/0xMoonrise/gochive/internal/database"
 	"github.com/0xMoonrise/gochive/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/mrz1836/go-sanitize"
 )
 
 func SetEditFile(app *core.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		filename := c.PostForm("filename")
 		editorial := c.PostForm("editorial")
+
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			slog.Error("cannot convert the id parameter", "error", err)
@@ -25,12 +25,19 @@ func SetEditFile(app *core.App) gin.HandlerFunc {
 
 		if !utils.ValidateFilename(filename) {
 			slog.Warn("invalid filename", "id", id)
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "Extension not allowed"})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "extension not allowed"})
 			return
 		}
 
-		filename = sanitize.XSS(filename)
-		editorial = sanitize.XSS(editorial)
+		if utils.IsTooLong(editorial) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "editorial too long"})
+			return
+		}
+
+		if utils.IsTooLong(filename) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "filename too long"})
+			return
+		}
 
 		err = app.DB.Queries.SetEditFile(c, database.SetEditFileParams{
 			Filename:  filename,

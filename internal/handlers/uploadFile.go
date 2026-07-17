@@ -35,6 +35,11 @@ func UploadFile(app *core.App) gin.HandlerFunc {
 			return
 		}
 
+		if utils.IsTooLong(file.Filename) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "filename too long"})
+			return
+		}
+
 		// Just in case
 		file.Filename = filepath.Base(file.Filename)
 		fileReader, err := file.Open()

@@ -70,6 +70,10 @@ func isValidURL(rawURL string) (*url.URL, error) {
 		return nil, errors.New("extension not allowed")
 	}
 
+	if utils.IsTooLong(path.Base(u.Path)) {
+		return nil, errors.New("filename too long")
+	}
+
 	return u, nil
 }
 

@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
-
 set -e
 
-sudo mkdir -p /opt/gochive/lib
-sudo chown 1000:1000 -R /opt/gochive/
+ROOT=/opt/gochive
 
-PDF_VER="5.4.530"
-HLJS_VER="11.11.1"
-MERMAID_VER="11.16.0"
-MATHJAX_VER="3.2.2"
+sudo mkdir -p "${ROOT}/lib"
+sudo chown 1000:1000 -R "${ROOT}"
 
+PDF_VER="6.1.200"
 ARCH=$(uname -m)
 TMP=/tmp/pdfium
+mkdir -p "$TMP"
 
-mkdir -p $TMP
-for cmd in gcc pkg-config zip wget make; do
+NPM_PACKAGES=(
+  "highlightjs|@highlightjs/cdn-assets|11.11.1|.|highlightjs"
+  "mermaid|mermaid|11.16.0|dist|mermaid"
+  "mathjax|mathjax|3.2.2|es5|mathjax"
+  "marked|marked|18.0.6|lib|marked"
+  "dompurify|dompurify|3.4.12|dist|dompurify"
+)
+
+for cmd in gcc pkg-config zip unzip wget make; do
     command -v "$cmd" >/dev/null 2>&1 || need_pkgs+=("$cmd")
 done
 
@@ -49,6 +54,7 @@ esac
 wget -q \
   "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/$TAR" \
   -O "/tmp/$TAR"
+
 tar -xzf "/tmp/$TAR" -C "$TMP"
 
 sudo cp "$TMP/lib/libpdfium.so" /usr/local/lib/
@@ -56,8 +62,8 @@ sudo cp -r "$TMP/include/"* /usr/local/include/
 sudo mkdir -p /usr/local/lib/pkgconfig
 
 echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/local.conf
-sudo ldconfig
 
+sudo ldconfig
 . "$TMP/VERSION"
 
 sudo tee /usr/local/lib/pkgconfig/pdfium.pc > /dev/null <<EOF
@@ -72,31 +78,31 @@ Libs: -L\${libdir} -lpdfium
 Cflags: -I\${includedir}
 EOF
 
-wget "https://github.com/mozilla/pdf.js/releases/download/v${PDF_VER}/pdfjs-${PDF_VER}-dist.zip" -P /tmp/
-unzip "/tmp/pdfjs-${PDF_VER}-dist.zip" -d /opt/gochive/lib/pdfjs/
+wget -q "https://github.com/mozilla/pdf.js/releases/download/v${PDF_VER}/pdfjs-${PDF_VER}-dist.zip" -P /tmp/
+unzip -q "/tmp/pdfjs-${PDF_VER}-dist.zip" -d "${ROOT}/lib/pdfjs/"
 
-mkdir -p /opt/gochive/lib/highlightjs
-wget -q \
-  "https://registry.npmjs.org/@highlightjs/cdn-assets/-/cdn-assets-${HLJS_VER}.tgz" \
-  -O "/tmp/highlightjs-${HLJS_VER}.tgz"
-tar -xzf "/tmp/highlightjs-${HLJS_VER}.tgz" -C /tmp
-cp -r /tmp/package/* /opt/gochive/lib/highlightjs/
-rm -rf /tmp/package
+for entry in "${NPM_PACKAGES[@]}"; do
+  IFS='|' read -r LABEL PKG_NAME VER SUBDIR DEST <<< "$entry"
 
-mkdir -p /opt/gochive/lib/mermaid
-wget -q \
-  "https://registry.npmjs.org/mermaid/-/mermaid-${MERMAID_VER}.tgz" \
-  -O "/tmp/mermaid-${MERMAID_VER}.tgz"
-tar -xzf "/tmp/mermaid-${MERMAID_VER}.tgz" -C /tmp
-cp -r /tmp/package/dist/* /opt/gochive/lib/mermaid/
-rm -rf /tmp/package
+  echo "Installing ${LABEL}@${VER}..."
+  DEST_DIR="${ROOT}/lib/${DEST}"
+  mkdir -p "$DEST_DIR"
 
-mkdir -p /opt/gochive/lib/mathjax
-wget -q \
-  "https://registry.npmjs.org/mathjax/-/mathjax-${MATHJAX_VER}.tgz" \
-  -O "/tmp/mathjax-${MATHJAX_VER}.tgz"
-tar -xzf "/tmp/mathjax-${MATHJAX_VER}.tgz" -C /tmp
-cp -r /tmp/package/es5/* /opt/gochive/lib/mathjax/
-rm -rf /tmp/package
+  TARBALL="/tmp/${LABEL}-${VER}.tgz"
+  wget -q \
+    "https://registry.npmjs.org/${PKG_NAME}/-/$(basename "$PKG_NAME")-${VER}.tgz" \
+    -O "$TARBALL"
 
-sudo chown 1000:1000 -R /opt/gochive/
+  rm -rf /tmp/package
+  tar -xzf "$TARBALL" -C /tmp
+
+  if [ "$SUBDIR" = "." ]; then
+    cp -r /tmp/package/* "$DEST_DIR"/
+  else
+    cp -r "/tmp/package/${SUBDIR}/"* "$DEST_DIR"/
+  fi
+
+  rm -rf /tmp/package "$TARBALL"
+done
+
+sudo chown 1000:1000 -R ${ROOT}
