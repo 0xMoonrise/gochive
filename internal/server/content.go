@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 var cachedCSS []byte
@@ -31,13 +29,17 @@ func loadViewerCSS() error {
 	return nil
 }
 
-func injectContentCSS() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if !strings.HasSuffix(c.Request.URL.Path, "viewer.css") {
-			c.Next()
+func injectContentCSS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if !strings.HasSuffix(r.URL.Path, "viewer.css") {
+			next.ServeHTTP(w, r)
 			return
 		}
-		c.Data(http.StatusOK, "text/css", cachedCSS)
-		c.Abort()
-	}
+
+		w.Header().Set("Content-Type", "text/css")
+		w.WriteHeader(http.StatusOK)
+		w.Write(cachedCSS)
+
+	})
 }

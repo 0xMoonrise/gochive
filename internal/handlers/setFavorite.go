@@ -7,26 +7,25 @@ import (
 
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
-	"github.com/gin-gonic/gin"
 )
 
-func SetFavorite(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
+func SetFavorite(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(r.PathValue("id"))
 		if err != nil {
 			slog.Warn("error trying to parse the page number", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})
+			Error(w, http.StatusInternalServerError, "something went wrong")
 			return
 		}
 
-		favorite, err := strconv.ParseBool(c.PostForm("favorite"))
+		favorite, err := strconv.ParseBool(r.FormValue("favorite"))
 		if err != nil {
 			slog.Warn("error trying to parse the favorite bool", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
+			Error(w, http.StatusBadRequest, "something went wrong")
 			return
 		}
 
-		err = app.DB.Queries.SetFavorite(c,
+		err = app.DB.Queries.SetFavorite(r.Context(),
 			database.SetFavoriteParams{
 				Favorite: favorite,
 				ID:       id,
@@ -34,9 +33,12 @@ func SetFavorite(app *core.App) gin.HandlerFunc {
 
 		if err != nil {
 			slog.Error("error trying to set the value to favorite", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong..."})
+			Error(w, http.StatusBadRequest, "something went wrong")
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"status": "Favorite Updated"})
+
+		JSON(w, http.StatusOK, Success{
+			Status: "favorite updated",
+		})
 	}
 }

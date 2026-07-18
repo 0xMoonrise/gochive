@@ -8,53 +8,54 @@ import (
 	"strings"
 
 	"github.com/0xMoonrise/gochive/internal/core"
-	"github.com/gin-gonic/gin"
 )
 
-func DeleteFile(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idParam := c.Param("id")
+func DeleteFile(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idParam := r.PathValue("id")
 		id, err := strconv.Atoi(idParam)
 		if err != nil {
 			slog.Warn("error trying to parse the page number",
 				"error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "Something went wrong... "})
+			Error(w, http.StatusInternalServerError, "Something went wrong... ")
 			return
 		}
 
-		filename, err := app.DB.Queries.GetArchiveById(c, id)
+		filename, err := app.DB.Queries.GetArchiveById(r.Context(), id)
 		if err != nil {
 			slog.Error("something went wrong fetching the file on DeleteFile",
 				"error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			Error(w, http.StatusBadRequest, "Something went wrong... ")
 			return
 		}
 
-		if err := app.DB.Queries.DeleteFile(c, id); err != nil {
+		if err := app.DB.Queries.DeleteFile(r.Context(), id); err != nil {
 			slog.Error("something went wrong while trying to delete a file",
 				"error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			Error(w, http.StatusBadRequest, "Something went wrong... ")
 			return
 		}
 
 		objKey := path.Join("files", idParam)
-		if err := app.Storage.DelItem(c, objKey); err != nil {
+		if err := app.Storage.DelItem(r.Context(), objKey); err != nil {
 			slog.Error("something went wrong while trying to delete file from storage",
 				"error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			Error(w, http.StatusBadRequest, "Something went wrong... ")
 			return
 		}
 
 		if !strings.HasSuffix(filename, ".md") {
 			objKey = path.Join("images", idParam)
-			if err := app.Storage.DelItem(c, objKey); err != nil {
+			if err := app.Storage.DelItem(r.Context(), objKey); err != nil {
 				slog.Error("something went wrong while trying to delete image from storage",
 					"error", err)
-				c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+				Error(w, http.StatusBadRequest, "Something went wrong... ")
 				return
 			}
 		}
 
-		c.JSON(http.StatusOK, gin.H{"status": "Deleted successfuly"})
+		JSON(w, http.StatusOK, Success{
+			Status: "Deleted successfuly",
+		})
 	}
 }

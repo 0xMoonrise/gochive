@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"database/sql"
+	"html/template"
 	"io"
 
 	"github.com/0xMoonrise/gochive/internal/config"
@@ -15,10 +16,11 @@ type Database struct {
 }
 
 type App struct {
-	DB      Database
-	Storage Store
-	Config  *config.Config
-	closeDB func() error
+	DB        Database
+	Storage   Store
+	Config    *config.Config
+	Templates *template.Template
+	closeDB   func() error
 }
 
 type Object struct {

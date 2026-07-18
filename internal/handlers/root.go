@@ -3,11 +3,13 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/0xMoonrise/gochive/internal/core"
 )
 
-func Root(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{
-		"title": "Archive",
-	})
+func Root(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		render(w, app.Templates, "index.html", http.StatusOK, map[string]any{
+			"title": "Archive",
+		})
+	}
 }

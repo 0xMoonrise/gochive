@@ -10,17 +10,16 @@ import (
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/database"
-	"github.com/gin-gonic/gin"
 )
 
-func SearchFiles(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func SearchFiles(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		search := c.PostForm("search")
-		page, err := strconv.ParseInt(c.Param("page"), 10, 64)
+		search := r.FormValue("search")
+		page, err := strconv.Atoi(r.PathValue("page"))
 		if err != nil {
 			slog.Error("cannot convert the page parameter on search file", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			Error(w, http.StatusBadRequest, "something went wrong...")
 			return
 		}
 
@@ -29,16 +28,16 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 			Valid:  true,
 		}
 
-		pageElements, err := app.DB.Queries.GetCountSearch(c, s)
+		pageElements, err := app.DB.Queries.GetCountSearch(r.Context(), s)
 		if err != nil {
 			slog.Error("cannot fetch the count", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wrong..."})
+			Error(w, http.StatusBadRequest, "something went wrong...")
 			return
 		}
 
-		pageLimit := math.Ceil(float64(pageElements) / float64(config.PAGE_SIZE))
-		if (page <= 0) || (page > int64(pageLimit)) {
-			c.JSON(http.StatusNotFound, gin.H{"status": "page not found"})
+		pageLimit := int(math.Ceil(float64(pageElements) / float64(config.PAGE_SIZE)))
+		if (page <= 0) || (page > pageLimit) {
+			Error(w, http.StatusNotFound, "page not found")
 			return
 		}
 
@@ -48,14 +47,17 @@ func SearchFiles(app *core.App) gin.HandlerFunc {
 			Offset:  int(page-1) * config.PAGE_SIZE,
 		}
 
-		data, err := app.DB.Queries.SearchArchive(c, searchParam)
+		searched, err := app.DB.Queries.SearchArchive(r.Context(), searchParam)
 
 		if err != nil {
 			slog.Error("cannot fetch the data from database", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "something went wront..."})
+			Error(w, http.StatusBadRequest, "something went wrong...")
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"files": data, "pages": pageLimit})
+		JSON(w, http.StatusOK, FilesResponse{
+			Files: searched,
+			Pages: pageLimit,
+		})
 	}
 }

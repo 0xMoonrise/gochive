@@ -7,35 +7,35 @@ import (
 	"strconv"
 
 	"github.com/0xMoonrise/gochive/internal/core"
-	"github.com/gin-gonic/gin"
 )
 
-func GetFile(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func GetFile(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		ParamId := c.Param("id")
-		id, err := strconv.Atoi(ParamId)
-		if err != nil {
-			slog.Warn("the id param cannot convert to int")
-			c.JSON(http.StatusBadRequest, gin.H{"status": "Something went wrong"}) // check status requet
+		paramID := r.PathValue("id")
+		id, err := strconv.Atoi(paramID)
+		if err != nil || id <= 0 {
+			slog.Warn("invalid id param", "raw", paramID)
+			Error(w, http.StatusBadRequest, "Something went wrong")
 			return
 		}
 
-		if _, err := app.DB.Queries.GetArchiveById(c, id); err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"status": "Not found"})
+		if _, err := app.DB.Queries.GetArchiveById(r.Context(), id); err != nil {
+			Error(w, http.StatusNotFound, "Not found")
 			return
 		}
 
-		objKey := path.Join("files", ParamId)
-		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
+		objKey := path.Join("files", paramID)
+		obj, err := app.Storage.GetItem(r.Context(), objKey)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"status": "Not found",
-			})
+			Error(w, http.StatusNotFound, "Not found")
 			return
 		}
 
 		defer obj.Reader.Close()
-		c.DataFromReader(http.StatusOK, obj.Length, obj.ContentType, obj.Reader, nil)
+
+		if err := fromStorageObject(w, obj); err != nil {
+			slog.Error("failed to stream file to response", "error", err, "id", id)
+		}
 	}
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
-	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -53,25 +52,25 @@ func renderHeadInject(title, pdfURL string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func View(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ParamId := c.Param("id")
-		id, err := strconv.Atoi(ParamId)
+func View(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paramID := r.PathValue("id")
+		id, err := strconv.Atoi(paramID)
 		if err != nil {
 			slog.Error("cannot convert id on view", "error", err)
-			c.JSON(http.StatusBadRequest, "something went wrong")
+			Error(w, http.StatusBadRequest, "Something went wrong")
 			return
 		}
 
-		filename, err := app.DB.Queries.GetArchiveById(c, id)
+		filename, err := app.DB.Queries.GetArchiveById(r.Context(), id)
 		if err != nil {
 			slog.Error("id not found on view", "error", err)
-			c.JSON(http.StatusBadRequest, "something went wrong")
+			Error(w, http.StatusNotFound, "Not found")
 			return
 		}
 
 		if strings.HasSuffix(filename, ".md") {
-			c.HTML(http.StatusOK, "view_md.html", gin.H{
+			render(w, app.Templates, "view_md.html", http.StatusOK, map[string]any{
 				"title": filename,
 				"id":    id,
 			})
@@ -81,18 +80,23 @@ func View(app *core.App) gin.HandlerFunc {
 		vendor, err := loadVendorViewer()
 		if err != nil {
 			slog.Error("load vendor failed on view", "error", err)
-			c.JSON(http.StatusBadRequest, "something went wrong")
+			Error(w, http.StatusBadRequest, "Something went wrong")
 			return
 		}
 
-		inject, err := renderHeadInject(filename, "/file/"+ParamId)
+		inject, err := renderHeadInject(filename, "/file/"+paramID)
 		if err != nil {
 			slog.Error("cannot inject content on view", "error", err)
-			c.JSON(http.StatusBadRequest, "something went wrong")
+			Error(w, http.StatusBadRequest, "Something went wrong")
 			return
 		}
 
 		html := bytes.Replace(vendor, []byte("<head>"), inject, 1)
-		c.Data(http.StatusOK, "text/html; charset=utf-8", html)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(html); err != nil {
+			slog.Error("failed to stream file to response", "error", err, "id", id)
+		}
+
 	}
 }

@@ -7,27 +7,35 @@ import (
 	"strconv"
 
 	"github.com/0xMoonrise/gochive/internal/core"
-	"github.com/gin-gonic/gin"
 )
 
-func GetImage(app *core.App) gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		id := c.Param("id")
-		if _, err := strconv.Atoi(id); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "invalid id"})
+func GetImage(app *core.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paramID := r.PathValue("id")
+		id, err := strconv.Atoi(paramID)
+		if err != nil || id <= 0 {
+			slog.Warn("invalid id param", "raw", paramID)
+			Error(w, http.StatusBadRequest, "Something went wrong")
+			return
+		}
+		if _, err := app.DB.Queries.GetArchiveById(r.Context(), id); err != nil {
+			Error(w, http.StatusNotFound, "Not found")
 			return
 		}
 
-		objKey := path.Join("images", id)
-		obj, err := app.Storage.GetItem(c.Request.Context(), objKey)
+		objKey := path.Join("images", paramID)
+		obj, err := app.Storage.GetItem(r.Context(), objKey)
 		if err != nil {
 			slog.Warn("image not found", "error", err)
-			c.JSON(http.StatusNotFound, gin.H{"status": "not found"})
+			Error(w, http.StatusNotFound, "not found")
 			return
 		}
 
 		defer obj.Reader.Close()
-		c.DataFromReader(http.StatusOK, obj.Length, obj.ContentType, obj.Reader, nil)
+
+		if err := fromStorageObject(w, obj); err != nil {
+			slog.Error("failed to stream file to response", "error", err, "id", id)
+		}
+
 	}
 }
