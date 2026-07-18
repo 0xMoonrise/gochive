@@ -9,9 +9,6 @@ port = "8080"
 # Directory where the SQLite database and app data live
 data = "/opt/gochive/"
 
-# Directory (or mount) used as backup destination
-backup = "/mnt/usb/backups/gochive/"
-
 # Filesystem storage (required if mode = 1)
 [fs]
 root = "/opt/gochive/"

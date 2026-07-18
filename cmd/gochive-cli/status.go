@@ -22,7 +22,6 @@ func status() *cobra.Command {
 			fmt.Println("Host: ", app.Config.Host)
 			fmt.Println("Data: ", app.Config.Data)
 			fmt.Printf("Mode: %v -> %v\n", app.Config.Mode, app.ModeToString())
-			fmt.Printf("Backup path: %s\n", app.Config.Backup)
 			switch app.Config.Mode {
 			case config.FS:
 				fmt.Printf("File system root: %s\n", app.Config.FS.Root)

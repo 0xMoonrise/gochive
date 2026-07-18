@@ -17,7 +17,6 @@ require (
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/zloylos/grsync v1.7.0
 )
 
 require (

@@ -9,13 +9,12 @@ import (
 )
 
 type Config struct {
-	Mode   Mode           `toml:"mode"`
-	Host   string         `toml:"host"`
-	Port   string         `toml:"port"`
-	Data   string         `toml:"data"`
-	Backup string         `toml:"backup"`
-	FS     FSClientConfig `toml:"fs"`
-	S3     S3ClientConfig `toml:"s3"`
+	Mode Mode           `toml:"mode"`
+	Host string         `toml:"host"`
+	Port string         `toml:"port"`
+	Data string         `toml:"data"`
+	FS   FSClientConfig `toml:"fs"`
+	S3   S3ClientConfig `toml:"s3"`
 }
 
 type FSClientConfig struct {
