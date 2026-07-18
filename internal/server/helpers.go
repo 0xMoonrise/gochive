@@ -55,10 +55,11 @@ func fromFS(mux *http.ServeMux, prefix string, diskPath string) {
 }
 
 func clientIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		parts := strings.Split(fwd, ",")
-		return strings.TrimSpace(parts[0])
+
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
 	}
+
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
