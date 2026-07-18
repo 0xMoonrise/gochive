@@ -18,7 +18,7 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 
 ## Setup
 
-`setup.sh` installs the native and frontend dependencies that gochive needs at runtime: pdfium, pdf.js, highlight.js, Mermaid, and MathJax. It downloads pinned versions of each and places them under `/opt/gochive/lib`.
+`setup.sh` installs the native and frontend dependencies that gochive needs at runtime: pdfium, pdf.js, highlight.js, Mermaid, MathJax, marked, and DOMPurify. It downloads pinned versions of each and places them under `/opt/gochive/lib`.
 
 ```sh
 ./setup.sh
@@ -51,9 +51,6 @@ port = "8080"
 # Directory where the SQLite database lives ($DATA/gochive.db)
 data = "/opt/gochive/"
 
-# Directory (or mount) used as backup destination by the CLI
-backup = "/mnt/usb/backups/gochive/"
-
 # Filesystem storage (required if mode = 1)
 [fs]
 root = "/opt/gochive/"
@@ -72,7 +69,6 @@ root = "/opt/gochive/"
 | `mode` | Storage backend selector: `1` for local filesystem, `2` for S3-compatible storage. |
 | `host` / `port` | Address and port the HTTP server binds to. |
 | `data` | Where the SQLite database file lives (`$data/gochive.db`). |
-| `backup` | Destination used by the CLI's `backup`/`restore` commands. |
 | `fs.root` | Where the filesystem storage backend keeps uploaded files (only used when `mode = 1`). |
 | `s3.*` | S3-compatible client settings, only used when `mode = 2`. |
 
@@ -144,8 +140,8 @@ A separate `gochive-cli` binary (built from `cmd/gochive-cli`) provides maintena
 
 ```sh
 gochive-cli status                 # print the active configuration
-gochive-cli backup                 # rsync data to the configured backup path
-gochive-cli restore                # restore data from the backup path
+gochive-cli backup -p <path>       # back up storage objects, the database, and config.toml
+gochive-cli restore -p <path>      # restore storage objects, the database, and config.toml
 gochive-cli generate [id]          # regenerate a thumbnail by id, or all of them if omitted
 gochive-cli upload_archive <url>   # download a file from a URL and add it to the archive
 gochive-cli version                # print the CLI version
