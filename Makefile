@@ -1,5 +1,3 @@
-include .env
-
 ENTRY=./cmd/gochive
 TARGET=gochive
 MIGRATIONS_DIR=./internal/core/db/migrations

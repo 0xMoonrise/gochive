@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
@@ -44,7 +43,7 @@ gochive upload_archive https://example.com/archive.md`,
 				return err
 			}
 
-			return downloadFile(url, app)
+			return downloadFile(cmd.Context(), url, app)
 		},
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			return app.Cleanup()
@@ -99,9 +98,7 @@ func (pr *progressReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func downloadFile(url *url.URL, app *core.App) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+func downloadFile(ctx context.Context, url *url.URL, app *core.App) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {

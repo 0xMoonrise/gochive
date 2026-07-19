@@ -30,7 +30,10 @@ func newBackupCmd() *cobra.Command {
 		Use:   "backup",
 		Short: "Backup gochive data to the external backup location",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := app.Run(core.StageConfig, core.StageDB, core.StageStorage); err != nil {
+			if err := app.Run(
+				core.StageConfig,
+				core.StageDB,
+				core.StageStorage); err != nil {
 				return err
 			}
 
@@ -57,7 +60,8 @@ func newRestoreCmd() *cobra.Command {
 		Use:   "restore",
 		Short: "Restore gochive data from the external backup location",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := app.Run(core.StageConfig, core.StageStorage); err != nil {
+			if err := app.Run(core.StageConfig,
+				core.StageStorage); err != nil {
 				return err
 			}
 			if backupPath == "" {
@@ -133,6 +137,7 @@ func backupObjects(ctx context.Context, app *core.App, backupPath string, files 
 		if _, err := io.Copy(f, obj.Reader); err != nil {
 			errCh <- fmt.Errorf("copy %s: %w", objKey, err)
 		}
+		slog.Info("An item has been backup", "id", objKey)
 	}
 
 	for _, file := range files {
@@ -292,6 +297,7 @@ func restoreObjects(ctx context.Context, app *core.App, localDir, prefix string)
 			if err != nil {
 				errCh <- fmt.Errorf("put %s: %w", objKey, err)
 			}
+			slog.Info("An item has been restored", "id", name)
 		}(entry.Name())
 	}
 

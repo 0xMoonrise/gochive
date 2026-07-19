@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/utils"
@@ -37,13 +36,10 @@ func newGenerateThumbnail() *cobra.Command {
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return generateAllThumbnail(app)
+				return generateAllThumbnail(cmd.Context(), app)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-
-			return generateOneThumbnail(ctx, app, args[0])
+			return generateOneThumbnail(cmd.Context(), app, args[0])
 		},
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			return app.Cleanup()
@@ -103,12 +99,9 @@ func generateOneThumbnail(ctx context.Context, app *core.App, arg string) error 
 	return nil
 }
 
-func generateAllThumbnail(app *core.App) error {
+func generateAllThumbnail(ctx context.Context, app *core.App) error {
 	const maxConcurrency = 8
 	var wg sync.WaitGroup
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
 
 	rows, err := app.DB.Queries.GetAllFiles(ctx)
 	if err != nil {
