@@ -6,15 +6,11 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -24,7 +20,6 @@ import (
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/0xMoonrise/gochive/internal/server"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,22 +37,6 @@ var PDF []byte = []byte("%PDF-1.4\n" +
 	"trailer\n<< /Size 5 /Root 1 0 R >>\n" +
 	"startxref\n268\n" +
 	"%%EOF\n")
-
-func projectRoot() string {
-	_, file, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(file), "..", "..")
-}
-
-func TestMain(m *testing.M) {
-	root := projectRoot()
-
-	if err := godotenv.Load(filepath.Join(root, ".env")); err != nil {
-		slog.Warn("no .env file found, relying on real env vars")
-	}
-
-	code := m.Run()
-	os.Exit(code)
-}
 
 func newTestConfig(t *testing.T) *config.Config {
 	t.Helper()

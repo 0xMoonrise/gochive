@@ -11,7 +11,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.0
 	github.com/chai2010/webp v1.4.0
 	github.com/google/uuid v1.6.0
-	github.com/joho/godotenv v1.5.1
 	github.com/klippa-app/go-pdfium v1.17.2
 	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/pressly/goose/v3 v3.26.0

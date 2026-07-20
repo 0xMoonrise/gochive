@@ -1,6 +1,6 @@
 package config
 
-const VERSION = "0.0.1"
+const VERSION = "1.0.1"
 
 const THUMB_PATH string = "static/thumbnails/"
 const LOCAL string = "127.0.0.1"
