@@ -9,7 +9,7 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 - Markdown viewer with syntax highlighting, Mermaid diagrams, and MathJax equations
 - Pluggable storage backend: local filesystem or S3-compatible storage
 - SQLite database, managed with goose migrations
-- CLI (built on Cobra) for backups, thumbnail regeneration, importing files from a URL, and inspecting the active configuration
+- CLI (built on Cobra) for running the server, backups, thumbnail regeneration, importing files from a URL, and inspecting the active configuration
 
 ## Requirements
 
@@ -23,8 +23,6 @@ Gochive is a personal project to store, back up, and centralize PDF documents, b
 ```sh
 ./setup.sh
 ```
-
-This step is only partially handled inside the Dockerfile. The C toolchain and `libpdfium.so` are built into the image, but the `pdfjs` frontend assets are not baked in. The runtime image expects them to be present at `/opt/gochive/` on the host, brought in via the bind mount described below (`-v /opt/gochive/:/opt/gochive/`). If you are building and running the image on a fresh host, run `./setup.sh` there first, or otherwise populate `/opt/gochive/`, before starting the container. Docker alone is not self-contained for this dependency.
 
 ## Configuration
 
@@ -85,7 +83,7 @@ S3_SECRET_KEY=...
 
 This keeps credentials out of any file that persists on disk or gets baked into a container image, and makes rotating a key a matter of updating an env var rather than editing a config file on the server.
 
-Run `gochive-cli status` at any time to print the resolved configuration (mode, paths, and the relevant S3/filesystem settings) without starting the server.
+Run `gochive status` at any time to print the resolved configuration (mode, paths, and the relevant S3/filesystem settings) without starting the server.
 
 ## Running with Docker
 
@@ -109,6 +107,8 @@ docker run -d --name gochive \
 
 (Omit the `S3_*` env vars entirely if you are running in `mode = 1`.)
 
+The container starts the server automatically (`gochive server`).
+
 ## Database
 
 Migrations live in `internal/core/db/migrations` and run against a SQLite file at `$data/gochive.db`.
@@ -126,23 +126,16 @@ Query code is generated with sqlc from `internal/database/sqlc.yml`:
 make sqlc
 ```
 
-## Server
-
-```sh
-./gochive
-```
-
-Starts the HTTP server on `$host:$port`.
-
 ## CLI
 
-A separate `gochive-cli` binary (built from `cmd/gochive-cli`) provides maintenance and import commands:
+Everything is handled through a single binary, `gochive` (built on Cobra), which bundles both the HTTP server and the maintenance commands:
 
 ```sh
-gochive-cli status                 # print the active configuration
-gochive-cli backup -p <path>       # back up storage objects, the database, and config.toml
-gochive-cli restore -p <path>      # restore storage objects, the database, and config.toml
-gochive-cli generate [id]          # regenerate a thumbnail by id, or all of them if omitted
-gochive-cli upload_archive <url>   # download a file from a URL and add it to the archive
-gochive-cli version                # print the CLI version
+gochive server                  # start the HTTP server on $host:$port
+gochive status                  # print the active configuration
+gochive backup -p <path>        # back up storage objects, the database, and config.toml
+gochive restore -p <path>       # restore storage objects, the database, and config.toml
+gochive generate [id]           # regenerate a thumbnail by id, or all of them if omitted
+gochive upload_archive <url>    # download a file from a URL and add it to the archive
+gochive version                 # print the binary version
 ```

@@ -26,4 +26,4 @@ COPY --from=builder /app/static ./static
 
 RUN ldconfig
 
-CMD ["./gochive"]
+CMD ["./gochive", "server"]
