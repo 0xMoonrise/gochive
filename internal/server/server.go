@@ -18,11 +18,27 @@ var Templates = template.Must(template.ParseFS(templatesFS, "templates/*.html"))
 
 type Middleware func(http.Handler) http.Handler
 
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func newResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
+		rw := newResponseWriter(w)
+		next.ServeHTTP(rw, r)
 		slog.Info("request",
+			"status", rw.statusCode,
 			"method", r.Method,
 			"path", r.URL.Path,
 			"ip", clientIP(r),
