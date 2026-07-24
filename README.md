@@ -107,7 +107,7 @@ docker run -d --name gochive \
 
 (Omit the `S3_*` env vars entirely if you are running in `mode = 1`.)
 
-The container starts the server automatically (`gochive server`).
+The container starts the server automatically (`gochive serve`).
 
 ## Database
 
