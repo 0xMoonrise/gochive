@@ -3,85 +3,48 @@ package server
 import (
 	"embed"
 	"html/template"
-	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/handlers"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 //go:embed templates/*
 var templatesFS embed.FS
 var Templates = template.Must(template.ParseFS(templatesFS, "templates/*.html"))
 
-type Middleware func(http.Handler) http.Handler
-
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func newResponseWriter(w http.ResponseWriter) *responseWriter {
-	return &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		rw := newResponseWriter(w)
-		next.ServeHTTP(rw, r)
-		slog.Info("request",
-			"status", rw.statusCode,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"ip", clientIP(r),
-			"time", time.Since(start),
-		)
-	})
-}
-
-func NewEngine() *http.ServeMux {
-	r := http.NewServeMux()
+func NewEngine() *chi.Mux {
+	r := chi.NewRouter()
 	return r
 }
 
 func NewServer(app *core.App) http.Handler {
-
 	app.Templates = Templates
 	loadViewerCSS()
 	r := NewEngine()
 
-	fromFS(r, "/static/", "./static")
-	fromFS(r, "/lib/", "/opt/gochive/lib")
-	fromFS(r, "/build/", "/opt/gochive/lib/pdfjs/build/")
-	fromFS(r, "/web/", "/opt/gochive/lib/pdfjs/web/")
+	r.Use(middleware.Logger)
+	r.Use(injectContentCSS)
 
-	r.HandleFunc("GET /{$}", handlers.Root(app))
-	r.HandleFunc("GET /file/{id}", handlers.GetFile(app))
-	r.HandleFunc("GET /view/{id}", handlers.View(app))
-	r.HandleFunc("GET /images/{id}", handlers.GetImage(app))
-	r.HandleFunc("GET /get_files/{page}", handlers.GetFiles(app))
+	FileServer(r, "/static", "./static")
+	FileServer(r, "/lib", "/opt/gochive/lib")
+	FileServer(r, "/build", "/opt/gochive/lib/pdfjs/build/")
+	FileServer(r, "/web", "/opt/gochive/lib/pdfjs/web/")
 
-	r.Handle("POST /upload", Chain(
-		handlers.UploadFile(app),
-		LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.Get("/", handlers.Root(app))
+	r.Get("/file/{id}", handlers.GetFile(app))
+	r.Get("/view/{id}", handlers.View(app))
+	r.Get("/images/{id}", handlers.GetImage(app))
+	r.Get("/get_files/{page}", handlers.GetFiles(app))
 
-	r.HandleFunc("POST /search/{page}", handlers.SearchFiles(app))
-	r.HandleFunc("POST /set_favorite/{id}", handlers.SetFavorite(app))
-	r.HandleFunc("PATCH /edit/{id}", handlers.SetEditFile(app))
-	r.HandleFunc("DELETE /file/{id}", handlers.DeleteFile(app))
+	r.Post("/search/{page}", handlers.SearchFiles(app))
+	r.Post("/set_favorite/{id}", handlers.SetFavorite(app))
+	r.Patch("/edit/{id}", handlers.SetEditFile(app))
+	r.Delete("/file/{id}", handlers.DeleteFile(app))
 
-	r.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/favicon.ico")
-	})
-
-	return Chain(r, injectContentCSS, loggingMiddleware)
+	r.With(LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
+	return r
 }

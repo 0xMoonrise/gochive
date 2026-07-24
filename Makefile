@@ -5,7 +5,7 @@ MIGRATIONS_DIR=./internal/core/db/migrations
 .PHONY: db 
 
 all:
-	go run $(ENTRY) server
+	go run $(ENTRY) serve
 
 build:
 	go build -o $(TARGET) $(ENTRY)

@@ -1,11 +1,12 @@
 package config
 
-const VERSION = "1.1.1"
+const VERSION = "1.2.0"
 
 const THUMB_PATH string = "static/thumbnails/"
 const LOCAL string = "127.0.0.1"
 const PAGE_SIZE int = 8
 
+const MAX_CONCURRENCY = 8
 const MAX_UPLOAD_SIZE = 60 << 20
 
 type Mode int

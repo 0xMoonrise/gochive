@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app/gochive .
 COPY --from=builder /usr/local/lib/libpdfium.so /usr/local/lib/
 COPY --from=builder /app/static ./static
+COPY --from=builder /opt/gochive /opt/gochive
 
 RUN ldconfig
 
-CMD ["./gochive", "server"]
+CMD ["./gochive", "serve"]

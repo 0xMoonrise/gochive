@@ -97,7 +97,7 @@ The image only ships `config.example.toml` for reference. Your real `config.toml
 
 ```sh
 docker run -d --name gochive \
-  -v /opt/gochive/config.toml:/app/config.toml:ro \
+  --mount type=bind,source="$(pwd)/config.example.toml",target=/opt/gochive/config.toml,readonly \
   -v /opt/gochive/:/opt/gochive/ \
 # -e S3_ACCESS_KEY=... \
 # -e S3_SECRET_KEY=... \
@@ -133,8 +133,8 @@ Everything is handled through a single binary, `gochive` (built on Cobra), which
 ```sh
 gochive server                  # start the HTTP server on $host:$port
 gochive status                  # print the active configuration
-gochive backup -p <path>        # back up storage objects, the database, and config.toml
-gochive restore -p <path>       # restore storage objects, the database, and config.toml
+gochive backup -p <path>        # back up storage objects and database
+gochive restore -p <path>       # restore storage objects and database
 gochive generate [id]           # regenerate a thumbnail by id, or all of them if omitted
 gochive upload_archive <url>    # download a file from a URL and add it to the archive
 gochive version                 # print the binary version

@@ -14,7 +14,7 @@ import (
 func newServerCmd() *cobra.Command {
 	app := core.NewApp()
 	return &cobra.Command{
-		Use:                   "server",
+		Use:                   "serve",
 		Short:                 "start http server",
 		DisableFlagsInUseLine: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

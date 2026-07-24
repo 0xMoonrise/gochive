@@ -11,7 +11,6 @@ import (
 
 func GetFile(app *core.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		paramID := r.PathValue("id")
 		id, err := strconv.Atoi(paramID)
 		if err != nil || id <= 0 {

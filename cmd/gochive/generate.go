@@ -9,11 +9,12 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"sync"
 
+	"github.com/0xMoonrise/gochive/internal/config"
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 func newGenerateThumbnail() *cobra.Command {
@@ -100,27 +101,25 @@ func generateOneThumbnail(ctx context.Context, app *core.App, arg string) error 
 }
 
 func generateAllThumbnail(ctx context.Context, app *core.App) error {
-	const maxConcurrency = 8
-	var wg sync.WaitGroup
-
 	rows, err := app.DB.Queries.GetAllFiles(ctx)
+
 	if err != nil {
 		return err
 	}
 
-	sem := make(chan struct{}, maxConcurrency)
+	g := new(errgroup.Group)
+	g.SetLimit(config.MAX_CONCURRENCY)
+
 	for _, row := range rows {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func() {
-			defer wg.Done()
-			defer func() { <-sem }()
+		g.Go(func() error {
 			id := strconv.Itoa(row.ID)
 			if err := generateOneThumbnail(ctx, app, id); err != nil {
 				slog.Error("An error ocurred while trying to generate a thumbnail", "error", err, "id", id)
+				return err
 			}
-		}()
+			return nil
+		})
 	}
-	wg.Wait()
-	return nil
+
+	return g.Wait()
 }

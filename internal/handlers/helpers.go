@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io"
 	"log/slog"
@@ -51,13 +50,4 @@ func fromStorageObject(w http.ResponseWriter, obj *core.Object) error {
 	}
 
 	return nil
-}
-
-func parseID(r *http.Request, param string) (int, error) {
-	raw := r.PathValue(param)
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, fmt.Errorf("invalid %s: %q", param, raw)
-	}
-	return id, nil
 }

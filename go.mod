@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.0
 	github.com/chai2010/webp v1.4.0
+	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/klippa-app/go-pdfium v1.17.2
 	github.com/mattn/go-sqlite3 v1.14.33

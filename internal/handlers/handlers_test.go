@@ -19,6 +19,7 @@ import (
 	"github.com/0xMoonrise/gochive/internal/core"
 	"github.com/0xMoonrise/gochive/internal/handlers"
 	"github.com/0xMoonrise/gochive/internal/server"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +50,7 @@ func newTestConfig(t *testing.T) *config.Config {
 	}
 }
 
-func setupTestApp(t *testing.T) (*core.App, *http.ServeMux) {
+func setupTestApp(t *testing.T) (*core.App, chi.Router) {
 	t.Helper()
 
 	app := core.NewApp()
@@ -70,7 +71,8 @@ func setupTestApp(t *testing.T) (*core.App, *http.ServeMux) {
 func TestSetup(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.HandleFunc("GET /{$}", handlers.Root(app))
+	r.Get("/", handlers.Root(app))
+
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	r.ServeHTTP(w, req)
@@ -80,11 +82,7 @@ func TestSetup(t *testing.T) {
 
 func TestUploadFile(t *testing.T) {
 	app, r := setupTestApp(t)
-
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
 
 	tests := []struct {
 		name       string
@@ -177,7 +175,7 @@ func sameFile(t *testing.T, fileA []byte, fileB []byte) {
 	assert.Equal(t, original, uploaded)
 }
 
-func uploadTestFile(t *testing.T, r *http.ServeMux, filename string, content []byte) UploadResponse {
+func uploadTestFile(t *testing.T, r chi.Router, filename string, content []byte) UploadResponse {
 	t.Helper()
 
 	body := &bytes.Buffer{}
@@ -204,10 +202,7 @@ func uploadTestFile(t *testing.T, r *http.ServeMux, filename string, content []b
 func TestIntegrity(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
 
 	t.Log("--- testing pdf file upload")
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
@@ -237,11 +232,8 @@ func TestIntegrity(t *testing.T) {
 func TestImageGeneration(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.HandleFunc("GET /images/{id}", handlers.GetImage(app))
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.Get("/images/{id}", handlers.GetImage(app))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
 
 	t.Log("--- generating image from a pdf file")
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
@@ -278,7 +270,7 @@ func TestImageGeneration(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code, w.Body.String())
 }
 
-func editFile(t *testing.T, r *http.ServeMux, id int64, filename, editorial string) *httptest.ResponseRecorder {
+func editFile(t *testing.T, r chi.Router, id int64, filename, editorial string) *httptest.ResponseRecorder {
 	t.Helper()
 
 	form := url.Values{}
@@ -293,17 +285,12 @@ func editFile(t *testing.T, r *http.ServeMux, id int64, filename, editorial stri
 	return w
 }
 
-// I'm going to assume that, whether it's Markdown or PDF,
-// it'll behave the same way in this endpoint /edit/:id
 func TestEditFile(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
 
-	r.HandleFunc("PATCH /edit/{id}", handlers.SetEditFile(app))
+	r.Patch("/edit/{id}", handlers.SetEditFile(app))
 
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 	assert.Equal(t, "Default", res.File.Editorial)
@@ -320,12 +307,8 @@ func TestEditFile(t *testing.T) {
 
 func TestEditFile_InvalidExtension(t *testing.T) {
 	app, r := setupTestApp(t)
-
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
-	r.HandleFunc("PATCH /edit/{id}", handlers.SetEditFile(app))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
+	r.Patch("/edit/{id}", handlers.SetEditFile(app))
 
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 
@@ -336,18 +319,14 @@ func TestEditFile_InvalidExtension(t *testing.T) {
 
 	w = editFile(t, r, res.File.ID, "malicious.exe", "New Editorial")
 	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
-
 }
 
 func TestSetFavorite(t *testing.T) {
 	app, r := setupTestApp(t)
 
-	r.Handle("POST /upload", server.Chain(
-		handlers.UploadFile(app),
-		server.LimitUploadSize(config.MAX_UPLOAD_SIZE),
-	))
+	r.With(server.LimitUploadSize(config.MAX_UPLOAD_SIZE)).Post("/upload", handlers.UploadFile(app))
 
-	r.HandleFunc("POST /set_favorite/{id}", handlers.SetFavorite(app))
+	r.Post("/set_favorite/{id}", handlers.SetFavorite(app))
 
 	res := uploadTestFile(t, r, uuid.New().String()+".pdf", PDF)
 	form := url.Values{}

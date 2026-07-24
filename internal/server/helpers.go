@@ -1,12 +1,12 @@
 package server
 
 import (
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func LimitUploadSize(maxBytes int64) func(http.Handler) http.Handler {
@@ -16,13 +16,6 @@ func LimitUploadSize(maxBytes int64) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func Chain(h http.Handler, mws ...Middleware) http.Handler {
-	for _, mw := range slices.Backward(mws) {
-		h = mw(h)
-	}
-	return h
 }
 
 type noListingFS struct {
@@ -49,20 +42,30 @@ func (nfs noListingFS) Open(name string) (http.File, error) {
 	return f, nil
 }
 
-func fromFS(mux *http.ServeMux, prefix string, diskPath string) {
-	fs := http.FileServer(noListingFS{http.Dir(diskPath)})
-	mux.Handle("GET "+prefix, http.StripPrefix(strings.TrimSuffix(prefix, "/"), fs))
+func cacheControl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		next.ServeHTTP(w, r)
+	})
 }
 
-func clientIP(r *http.Request) string {
+func FileServer(r chi.Router, path string, root string) {
 
-	if ip := r.Header.Get("X-Real-IP"); ip != "" {
-		return ip
+	httpFileSystem := http.Dir(root)
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit any URL parameters")
 	}
 
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", http.StatusMovedPermanently).ServeHTTP)
+		path += "/"
 	}
-	return host
+	path += "*"
+
+	r.With(cacheControl).Get(path, func(w http.ResponseWriter, r *http.Request) {
+		rctx := chi.RouteContext(r.Context())
+		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+		fs := http.StripPrefix(pathPrefix, http.FileServer(noListingFS{httpFileSystem}))
+		fs.ServeHTTP(w, r)
+	})
 }
